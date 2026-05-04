@@ -3,7 +3,82 @@
 {% block title %}Detalhe do Lead | CRM360{% endblock %}
 
 {% block content %}
-<style>
+    <style>
+    .lead-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .action-btn {
+        position: relative;
+        overflow: hidden;
+        padding: 12px 18px;
+        border-radius: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(255,255,255,.08);
+        color: #fff;
+        transition: .25s ease;
+        box-shadow: 0 10px 25px rgba(0,0,0,.22);
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 18px 35px rgba(0,0,0,.35);
+    }
+
+    .action-btn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -80%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+        transform: skewX(-20deg);
+        transition: .45s;
+    }
+
+    .action-btn:hover::after {
+        left: 130%;
+    }
+
+    .action-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.18);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-whatsapp {
+        background: linear-gradient(135deg, #15803d, #22c55e);
+    }
+
+    .btn-ligar {
+        background: linear-gradient(135deg, #b91c1c, #ef4444);
+    }
+
+    .btn-instagram {
+        background: linear-gradient(135deg, #7e22ce, #ec4899, #f97316);
+    }
+
+    .btn-voltar {
+        background: linear-gradient(135deg, #1e293b, #334155);
+    }
+    /* Ícone */
+    .btn span {
+        font-size: 14px;
+    }
+    
+
     .lead-top-grid {
         display: block;
         margin-bottom: 20px;
@@ -124,19 +199,33 @@
             <p style="color:#94a3b8;">Perfil completo do lead e histórico de atendimento.</p>
 
             <div class="lead-actions">
+
                 {% if lead.telefone %}
-                    <a class="btn" target="_blank" href="https://wa.me/55{{ lead.telefone|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '') }}">
-                        WhatsApp rápido
+                    <a class="action-btn btn-whatsapp" target="_blank"
+                    href="https://wa.me/55{{ lead.telefone }}">
+                        <span class="action-icon">💬</span>
+                        WhatsApp
                     </a>
 
-                    <a class="btn" href="tel:{{ lead.telefone }}">
-                        📞 Ligar
+                    <a class="action-btn btn-ligar" href="tel:{{ lead.telefone }}">
+                        <span class="action-icon">📞</span>
+                        Ligar
                     </a>
                 {% endif %}
 
-                <a class="btn" href="{{ url_for('leads.lista') }}">
+                {% if lead.instagram %}
+                    <a class="action-btn btn-instagram" target="_blank"
+                    href="https://instagram.com/{{ lead.instagram|replace('@','') }}">
+                        <span class="action-icon">📷</span>
+                        Instagram
+                    </a>
+                {% endif %}
+
+                <a class="action-btn btn-voltar" href="{{ url_for('leads.lista') }}">
+                    <span class="action-icon">←</span>
                     Voltar
                 </a>
+
             </div>
         </div>
 

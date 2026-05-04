@@ -8,6 +8,8 @@ class Lead(db.Model):
     nome = db.Column(db.String(150), nullable=False)
     telefone = db.Column(db.String(20))
     email = db.Column(db.String(150))
+    instagram = db.Column(db.String(150))
+    instagram_id = db.Column(db.String(200))  # 👈 esse aqui
 
     origem = db.Column(db.String(100))
     produto_interesse = db.Column(db.String(150))

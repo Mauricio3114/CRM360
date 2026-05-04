@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from urllib.parse import quote
 from openpyxl import load_workbook
+import requests
 
 from app import db
 from app.models.lead import Lead
@@ -11,7 +12,6 @@ from app.models.empresa import Empresa
 from app.models.usuario import Usuario
 from app.services.ia_sdr import responder_lead, registrar_interacao_ia
 
-import requests
 
 leads_bp = Blueprint("leads", __name__, url_prefix="/leads")
 
@@ -112,10 +112,12 @@ def novo():
 
     if request.method == "POST":
         usuario_id = request.form.get("usuario_id") or current_user.id
+        instagram = request.form.get("instagram", "").strip()
 
         lead = Lead(
             nome=request.form["nome"],
             telefone=request.form["telefone"],
+            instagram=instagram,
             origem=request.form["origem"],
             produto_interesse=request.form["produto"],
             pipeline_id=primeira_etapa.id if primeira_etapa else None,
@@ -174,6 +176,7 @@ def importar():
             email = limpar_texto(linha[2] if len(linha) > 2 else "")
             origem = limpar_texto(linha[3] if len(linha) > 3 else "")
             produto = limpar_texto(linha[4] if len(linha) > 4 else "")
+            instagram = limpar_texto(linha[5] if len(linha) > 5 else "")
 
             if not nome and not telefone:
                 ignorados += 1
@@ -194,6 +197,7 @@ def importar():
                 nome=nome or "Lead sem nome",
                 telefone=telefone,
                 email=email,
+                instagram=instagram,
                 origem=origem or "Importação Excel",
                 produto_interesse=produto,
                 pipeline_id=primeira_etapa.id if primeira_etapa else None,
@@ -427,7 +431,6 @@ def ligar(lead_id):
     telefone = lead.telefone or ""
     telefone = ''.join(filter(str.isdigit, telefone))
 
-    # 🔥 REGISTRA NO HISTÓRICO
     registrar_historico_whatsapp(
         lead,
         "Ligação iniciada",
@@ -442,5 +445,4 @@ def ligar(lead_id):
         )
         return redirect(url_for("leads.detalhe", lead_id=lead.id))
 
-    # 🔥 REDIRECIONA PRA LIGAÇÃO
     return redirect(f"tel:{telefone}")
