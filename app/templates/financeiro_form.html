@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Novo lançamento | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .form-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .form-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        max-width: 760px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 22px;
+    }
+</style>
+
+<div class="form-hero">
+    <h2 style="margin:0;">Novo lançamento financeiro</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">Cadastre uma entrada ou saída financeira.</p>
+</div>
+
+<div class="form-card">
+    <form method="POST">
+        <div class="form-group">
+            <label>Descrição</label>
+            <input class="form-control" type="text" name="descricao" required placeholder="Ex: Venda CRM360, comissão, anúncio pago">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo</label>
+            <select class="form-control" name="tipo" required>
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saída</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Categoria</label>
+            <select class="form-control" name="categoria" required>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria }}">{{ categoria }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Valor</label>
+            <input class="form-control" type="text" name="valor" required placeholder="Ex: 500.00">
+        </div>
+
+        <div class="form-group">
+            <label>Data</label>
+            <input class="form-control" type="date" name="data_lancamento">
+        </div>
+
+        <div class="form-group">
+            <label>Vincular a um lead</label>
+            <select class="form-control" name="lead_id">
+                <option value="">Sem lead vinculado</option>
+                {% for lead in leads %}
+                    <option value="{{ lead.id }}">{{ lead.nome }} - {{ lead.telefone }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn" type="submit">Salvar lançamento</button>
+            <a class="btn btn-secondary" href="{{ url_for('financeiro.index') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

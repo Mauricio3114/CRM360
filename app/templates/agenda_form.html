@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Novo lembrete | CRM360{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Novo lembrete</h2>
+    <p style="color:#94a3b8;">Crie uma tarefa, reunião, ligação ou follow-up para não perder venda.</p>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <label>Título</label><br>
+        <input type="text" name="titulo" required placeholder="Ex: Retornar proposta para João"
+               style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;"><br>
+
+        <label>Tipo</label><br>
+        <select name="tipo" required style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+            <option value="Follow-up">Follow-up</option>
+            <option value="Ligação">Ligação</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Reunião">Reunião</option>
+            <option value="Tarefa">Tarefa</option>
+        </select><br>
+
+        <label>Data e hora</label><br>
+        <input type="datetime-local" name="data_tarefa" required
+               style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;"><br>
+
+        <label>Vincular a um lead</label><br>
+        <select name="lead_id" style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+            <option value="">Sem lead vinculado</option>
+            {% for lead in leads %}
+                <option value="{{ lead.id }}">{{ lead.nome }} - {{ lead.telefone }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label>Descrição</label><br>
+        <textarea name="descricao" rows="4" placeholder="Ex: Cliente pediu retorno amanhã pela manhã"
+                  style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;"></textarea><br>
+
+        <div style="background:#111827; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #1f2937;">
+            <label>
+                <input type="checkbox" name="enviar_whatsapp">
+                Enviar WhatsApp automático quando chegar o horário
+            </label>
+
+            <br><br>
+
+            <label>Mensagem do WhatsApp</label><br>
+            <textarea name="mensagem_whatsapp" rows="4"
+                      placeholder="Olá, tudo bem? Passando para dar continuidade ao seu atendimento."
+                      style="width:100%; padding:10px; margin-top:8px; border-radius:8px;"></textarea>
+        </div>
+
+        <button class="btn" type="submit">Salvar lembrete</button>
+        <a class="btn btn-secondary" href="{{ url_for('agenda.index') }}">Voltar</a>
+    </form>
+</div>
+{% endblock %}

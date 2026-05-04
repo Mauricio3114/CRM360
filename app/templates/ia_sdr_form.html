@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Regra IA SDR | CRM360{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{% if regra %}Editar regra{% else %}Nova regra{% endif %}</h2>
+    <p style="color:#94a3b8;">Monte uma regra para a IA responder e agir automaticamente.</p>
+</div>
+
+<div class="card">
+    <form method="POST">
+        <label>Nome da regra</label><br>
+        <input type="text" name="nome" required value="{{ regra.nome if regra else '' }}"
+               placeholder="Ex: Cliente pediu preço"
+               style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+
+        <label>Palavras-chave</label><br>
+        <textarea name="palavras_chave" required rows="3"
+                  placeholder="Ex: valor, preço, quanto, custa, plano"
+                  style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">{{ regra.palavras_chave if regra else '' }}</textarea>
+
+        <label>Resposta da IA</label><br>
+        <textarea name="resposta" required rows="6"
+                  placeholder="Use {nome} e {produto} na resposta."
+                  style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">{{ regra.resposta if regra else '' }}</textarea>
+
+        <label>Mover para etapa do pipeline</label><br>
+        <select name="etapa_pipeline" style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+            <option value="">Não mover</option>
+            {% for etapa in ["Novo Lead", "Contato Feito", "Proposta", "Negociação", "Fechado", "Perdido"] %}
+                <option value="{{ etapa }}" {% if regra and regra.etapa_pipeline == etapa %}selected{% endif %}>
+                    {{ etapa }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <div style="background:#111827; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #1f2937;">
+            <label>
+                <input type="checkbox" name="criar_tarefa" {% if regra and regra.criar_tarefa %}checked{% endif %}>
+                Criar tarefa automática
+            </label>
+
+            <br><br>
+
+            <label>Título da tarefa</label><br>
+            <input type="text" name="titulo_tarefa" value="{{ regra.titulo_tarefa if regra else '' }}"
+                   placeholder="Ex: Retornar para {nome}"
+                   style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+
+            <label>Tipo da tarefa</label><br>
+            <select name="tipo_tarefa" style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+                {% for tipo in ["Follow-up", "Ligação", "WhatsApp", "Reunião", "Tarefa"] %}
+                    <option value="{{ tipo }}" {% if regra and regra.tipo_tarefa == tipo %}selected{% endif %}>
+                        {{ tipo }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label>Horas para criar a tarefa</label><br>
+            <input type="number" name="horas_para_tarefa" value="{{ regra.horas_para_tarefa if regra else 24 }}"
+                   style="width:100%; padding:10px; margin:8px 0 14px; border-radius:8px;">
+        </div>
+
+        <button class="btn" type="submit">Salvar regra</button>
+        <a class="btn btn-secondary" href="{{ url_for('ia_sdr.index') }}">Voltar</a>
+    </form>
+</div>
+{% endblock %}

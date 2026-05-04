@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+    <h2>Metas comerciais</h2>
+    <p style="color:#94a3b8;">Acompanhe o desempenho financeiro da operação.</p>
+
+    <a class="btn" href="{{ url_for('metas.nova') }}">+ Nova meta</a>
+</div>
+
+{% for item in metas %}
+<div class="card">
+
+    <h3>{{ item.meta.nome }}</h3>
+
+    <p style="color:#94a3b8;">
+        Meta: R$ {{ "%.2f"|format(item.meta.valor_meta) }}
+    </p>
+
+    <p style="color:#22c55e;">
+        Realizado: R$ {{ "%.2f"|format(item.realizado) }}
+    </p>
+
+    <div style="margin-top:10px;">
+        <div style="background:#111827; height:12px; border-radius:999px;">
+            <div style="
+                width: {{ item.progresso }}%;
+                background: linear-gradient(90deg, #22c55e, #16a34a);
+                height:100%;
+                border-radius:999px;
+            "></div>
+        </div>
+    </div>
+
+    <p style="margin-top:10px;">
+        {{ item.progresso|round(1) }}% atingido
+    </p>
+
+</div>
+{% endfor %}
+
+{% endblock %}

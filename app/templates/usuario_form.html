@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Usuário | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .form-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .form-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        max-width: 760px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+    }
+</style>
+
+<div class="form-hero">
+    <h2 style="margin:0;">Novo usuário</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Cadastre um usuário vinculado à empresa atual.
+    </p>
+</div>
+
+<div class="form-card">
+    <form method="POST">
+        <div class="form-group">
+            <label>Nome</label>
+            <input class="form-control" type="text" name="nome" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" type="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Senha</label>
+            <input class="form-control" type="password" name="senha" required>
+        </div>
+
+        <div class="form-group">
+            <label>Tipo</label>
+            <select class="form-control" name="tipo" required>
+                <option value="vendedor">Vendedor</option>
+                <option value="admin">Admin</option>
+                <option value="gestor">Gestor</option>
+            </select>
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="submit">Salvar usuário</button>
+            <a class="btn btn-secondary" href="{{ url_for('usuarios.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

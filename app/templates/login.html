@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | CRM360</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+        }
+
+        .login-card {
+            width: 420px;
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 20px;
+            padding: 34px;
+        }
+
+        h1 { margin: 0 0 8px; }
+
+        p { color: #94a3b8; }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #fff;
+            box-sizing: border-box;
+            margin-bottom: 16px;
+        }
+
+        button, .btn-link {
+            background: #22c55e;
+            color: #000;
+            border: none;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #fff;
+            margin-left: 8px;
+        }
+
+        .flash {
+            background: rgba(239,68,68,.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,.35);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>CRM360</h1>
+        <p>Entre para gerenciar leads, vendas, WhatsApp e IA.</p>
+
+        {% with mensagens = get_flashed_messages() %}
+            {% if mensagens %}
+                {% for msg in mensagens %}
+                    <div class="flash">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <label>Email</label>
+            <input type="email" name="email" required>
+
+            <label>Senha</label>
+            <input type="password" name="senha" required>
+
+            <button type="submit">Entrar</button>
+            <a class="btn-link btn-secondary" href="{{ url_for('auth.register') }}">Criar empresa</a>
+        </form>
+    </div>
+</body>
+</html>

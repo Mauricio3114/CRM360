@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Inbox WhatsApp | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .inbox-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .whatsapp-layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 18px;
+        min-height: 620px;
+    }
+
+    .side-panel, .chat-panel, .manual-panel {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 18px;
+        border-bottom: 1px solid #1e293b;
+        background: #030712;
+    }
+
+    .panel-header h3 {
+        margin: 0;
+    }
+
+    .contact-list {
+        max-height: 540px;
+        overflow-y: auto;
+    }
+
+    .contact-item {
+        display: block;
+        padding: 14px 16px;
+        border-bottom: 1px solid #111827;
+        text-decoration: none;
+        color: #fff;
+        transition: .2s;
+    }
+
+    .contact-item:hover {
+        background: #111827;
+    }
+
+    .contact-item.active {
+        background: linear-gradient(135deg, rgba(34,197,94,.2), rgba(56,189,248,.08));
+        border-left: 4px solid #22c55e;
+    }
+
+    .contact-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .contact-last {
+        color: #94a3b8;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-header {
+        padding: 18px;
+        border-bottom: 1px solid #1e293b;
+        background: #030712;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-body {
+        padding: 18px;
+        height: 430px;
+        overflow-y: auto;
+        background:
+            radial-gradient(circle at top left, rgba(34,197,94,.08), transparent 30%),
+            #020617;
+    }
+
+    .bubble-row {
+        display: flex;
+        margin-bottom: 12px;
+    }
+
+    .bubble-row.recebida {
+        justify-content: flex-start;
+    }
+
+    .bubble-row.enviada {
+        justify-content: flex-end;
+    }
+
+    .bubble {
+        max-width: 70%;
+        padding: 12px 14px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .bubble.recebida {
+        background: #111827;
+        border: 1px solid #1f2937;
+        color: #e5e7eb;
+        border-bottom-left-radius: 4px;
+    }
+
+    .bubble.enviada {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        color: #001b0b;
+        border-bottom-right-radius: 4px;
+    }
+
+    .bubble-time {
+        display: block;
+        margin-top: 6px;
+        font-size: 11px;
+        opacity: .75;
+    }
+
+    .chat-footer {
+        padding: 16px;
+        border-top: 1px solid #1e293b;
+        background: #030712;
+    }
+
+    .reply-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .reply-input {
+        flex: 1;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+        margin: 8px 0 14px;
+    }
+
+    .manual-panel {
+        margin-top: 18px;
+        padding: 20px;
+    }
+
+    .empty-chat {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .status-small {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .lead-link {
+        color: #22c55e;
+        text-decoration: none;
+        font-weight: bold;
+    }
+</style>
+
+<div class="inbox-hero">
+    <h2 style="margin:0;">Inbox WhatsApp</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Central profissional para acompanhar conversas, responder contatos e vincular mensagens aos leads.
+    </p>
+</div>
+
+<div class="whatsapp-layout">
+    <div class="side-panel">
+        <div class="panel-header">
+            <h3>Conversas</h3>
+            <p style="color:#94a3b8; margin:6px 0 0;">Contatos recentes</p>
+        </div>
+
+        <div class="contact-list">
+            {% if contatos %}
+                {% for contato in contatos %}
+                    <a class="contact-item {% if telefone_selecionado == contato.telefone %}active{% endif %}"
+                       href="{{ url_for('whatsapp_inbox.inbox', telefone=contato.telefone) }}">
+
+                        <div class="contact-name">
+                            {{ contato.nome }}
+                        </div>
+
+                        <div class="contact-last">
+                            {{ contato.ultima_mensagem }}
+                        </div>
+
+                        <div class="status-small">
+                            {{ contato.telefone }} • {{ contato.total }} msg
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div style="padding:18px; color:#64748b;">
+                    Nenhuma conversa ainda.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chat-panel">
+        {% if contato_atual %}
+            <div class="chat-header">
+                <div>
+                    <strong>{{ contato_atual.nome }}</strong>
+                    <div style="color:#94a3b8; font-size:13px;">{{ contato_atual.telefone }}</div>
+
+                    {% if contato_atual.lead %}
+                        <a class="lead-link" href="{{ url_for('leads.detalhe', lead_id=contato_atual.lead.id) }}">
+                            Abrir lead
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="chat-body" id="chatBody">
+                {% for msg in conversa %}
+                    <div class="bubble-row {{ msg.direcao }}">
+                        <div class="bubble {{ msg.direcao }}">
+
+                            {% if msg.tipo_mensagem == "texto" %}
+                                {{ msg.mensagem }}
+
+                            {% elif msg.tipo_mensagem == "audio" %}
+                                <strong>🎤 Áudio</strong><br>
+                                {% if msg.media_url %}
+                                    <audio controls style="margin-top:8px; width:100%;">
+                                        <source src="{{ msg.media_url }}" type="{{ msg.media_mime_type or 'audio/ogg' }}">
+                                    </audio>
+                                {% else %}
+                                    <span>Áudio recebido. A mídia será carregada pela API.</span>
+                                {% endif %}
+
+                            {% elif msg.tipo_mensagem == "image" %}
+                                <strong>🖼️ Imagem</strong><br>
+                                {% if msg.media_url %}
+                                    <img src="{{ msg.media_url }}" style="max-width:260px; border-radius:12px; margin-top:8px;">
+                                {% else %}
+                                    <span>Imagem recebida. A mídia será carregada pela API.</span>
+                                {% endif %}
+
+                            {% elif msg.tipo_mensagem == "video" %}
+                                <strong>🎥 Vídeo</strong><br>
+                                {% if msg.media_url %}
+                                    <video controls style="max-width:300px; border-radius:12px; margin-top:8px;">
+                                        <source src="{{ msg.media_url }}" type="{{ msg.media_mime_type or 'video/mp4' }}">
+                                    </video>
+                                {% else %}
+                                    <span>Vídeo recebido. A mídia será carregada pela API.</span>
+                                {% endif %}
+
+                            {% elif msg.tipo_mensagem == "document" %}
+                                <strong>📄 Documento</strong><br>
+                                {% if msg.media_url %}
+                                    <a class="btn btn-secondary" href="{{ msg.media_url }}" target="_blank">
+                                        Abrir documento
+                                    </a>
+                                {% else %}
+                                    <span>Documento recebido. A mídia será carregada pela API.</span>
+                                {% endif %}
+
+                            {% else %}
+                                {{ msg.mensagem or "Mensagem recebida" }}
+                            {% endif %}
+
+                            <span class="bubble-time">
+                                {{ msg.criado_em.strftime("%d/%m/%Y %H:%M") }} • {{ msg.status }}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="chat-footer">
+                <form method="POST" action="{{ url_for('whatsapp_inbox.responder') }}" class="reply-form">
+                    <input type="hidden" name="telefone" value="{{ contato_atual.telefone }}">
+                    <input class="reply-input" type="text" name="mensagem" placeholder="Digite sua resposta..." required>
+                    <button class="btn" type="submit">Enviar</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="empty-chat">
+                <div>
+                    <h3>Selecione uma conversa</h3>
+                    <p>Ou registre uma mensagem recebida abaixo para iniciar.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="manual-panel">
+    <h3>Registrar mensagem recebida</h3>
+    <p style="color:#94a3b8;">Enquanto o webhook da Meta não estiver ativo, você pode lançar manualmente.</p>
+
+    <form method="POST" action="{{ url_for('whatsapp_inbox.nova_manual') }}">
+        <label>Lead vinculado</label>
+        <select class="form-control" name="lead_id">
+            <option value="">Sem lead vinculado</option>
+            {% for lead in leads %}
+                <option value="{{ lead.id }}">{{ lead.nome }} - {{ lead.telefone }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Nome do contato</label>
+        <input class="form-control" type="text" name="nome_contato" placeholder="Ex: João Silva">
+
+        <label>Telefone</label>
+        <input class="form-control" type="text" name="telefone" placeholder="Ex: 85999999999" required>
+
+        <label>Mensagem recebida</label>
+        <textarea class="form-control" name="mensagem" rows="4" placeholder="Digite a mensagem recebida..." required></textarea>
+
+        <button class="btn" type="submit">Salvar mensagem</button>
+    </form>
+</div>
+
+<script>
+    const chatBody = document.getElementById("chatBody");
+    if (chatBody) {
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+</script>
+{% endblock %}

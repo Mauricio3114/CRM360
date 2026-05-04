@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp API | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .config-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .config-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        max-width: 850px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .hint {
+        color: #64748b;
+        font-size: 13px;
+        margin-top: 6px;
+    }
+
+    .status-box {
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 18px;
+    }
+
+    .status-on {
+        color: #22c55e;
+        font-weight: bold;
+    }
+
+    .status-off {
+        color: #f87171;
+        font-weight: bold;
+    }
+
+    .check-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 14px;
+        padding: 14px;
+        margin: 18px 0;
+    }
+
+    .check-line input {
+        width: 18px;
+        height: 18px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="config-hero">
+    <h2 style="margin:0;">Configuração WhatsApp API</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Conecte o CRM360 com a API oficial da Meta para envio direto pelo sistema.
+    </p>
+</div>
+
+<div class="config-card">
+    <div class="status-box">
+        {% if empresa.whatsapp_ativo %}
+            <span class="status-on">🟢 API ativada</span>
+        {% else %}
+            <span class="status-off">🔴 API desativada</span>
+        {% endif %}
+        <p style="color:#94a3b8; margin:8px 0 0;">
+            Enquanto estiver desativada, o CRM continua usando o envio manual pelo WhatsApp.
+        </p>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Token da Meta</label>
+            <input class="form-control" type="text" name="token"
+                   value="{{ empresa.whatsapp_token or '' }}"
+                   placeholder="Cole aqui o token permanente ou temporário da Meta">
+            <div class="hint">Esse token autoriza o CRM a enviar mensagens pela API.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Phone Number ID</label>
+            <input class="form-control" type="text" name="phone_id"
+                   value="{{ empresa.whatsapp_phone_number_id or '' }}"
+                   placeholder="Ex: 123456789000000">
+            <div class="hint">ID do número de telefone conectado ao WhatsApp Cloud API.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Business ID</label>
+            <input class="form-control" type="text" name="business_id"
+                   value="{{ empresa.whatsapp_business_id or '' }}"
+                   placeholder="Ex: 987654321000000">
+            <div class="hint">ID do portfólio empresarial / WhatsApp Business da Meta.</div>
+        </div>
+
+        <label class="check-line">
+            <input type="checkbox" name="ativo" {% if empresa.whatsapp_ativo %}checked{% endif %}>
+            <span>Ativar envio pela API oficial da Meta</span>
+        </label>
+
+        <div class="actions">
+            <button class="btn" type="submit">Salvar configurações</button>
+            <a class="btn btn-secondary" href="{{ url_for('dashboard.home') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

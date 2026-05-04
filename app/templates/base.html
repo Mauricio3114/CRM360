@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}CRM360{% endblock %}</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#22c55e">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #020617, #030712);
+            padding: 22px 18px;
+            border-right: 1px solid #1e293b;
+            box-shadow: 12px 0 30px rgba(0,0,0,.25);
+        }
+
+        .logo-box {
+            background: linear-gradient(135deg, #052e16, #020617);
+            border: 1px solid #1e293b;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 22px;
+        }
+
+        .logo-box h2 {
+            margin: 0;
+            font-size: 26px;
+        }
+
+        .logo-box span {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .menu-section {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin: 18px 0 8px;
+            letter-spacing: .8px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            margin-bottom: 8px;
+            padding: 11px 12px;
+            border-radius: 12px;
+            transition: .2s;
+            font-weight: 600;
+        }
+
+        .sidebar a:hover {
+            background: #111827;
+            color: #22c55e;
+            transform: translateX(3px);
+        }
+
+        .sidebar .active-link {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #02130a;
+            font-weight: bold;
+        }
+
+        .sidebar hr {
+            border: none;
+            border-top: 1px solid #1e293b;
+            margin: 18px 0;
+        }
+
+        .logout-link {
+            color: #fca5a5 !important;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            min-width: 0;
+        }
+
+        .card {
+            background: #020617;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: #22c55e;
+            color: #000;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        input, select, textarea {
+            background: #fff;
+            color: #111827;
+            border: none;
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .badge {
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-pendente {
+            background: #f59e0b;
+            color: #000;
+        }
+
+        .badge-concluida {
+            background: #22c55e;
+            color: #000;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: auto;
+                padding: 14px;
+            }
+
+            .logo-box {
+                margin-bottom: 14px;
+            }
+
+            .sidebar a {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .content {
+                padding: 14px;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <div class="sidebar">
+        <div class="logo-box">
+            <h2>CRM360</h2>
+            <span>Vendas • IA • Automação</span>
+        </div>
+
+        <div class="menu-section">Principal</div>
+        <a href="{{ url_for('dashboard.home') }}">📊 Dashboard</a>
+
+        {% if current_user.tipo == "master" %}
+            <a href="{{ url_for('master.index') }}">👑 Painel Master</a>
+        {% endif %}
+
+        <a href="{{ url_for('leads.lista') }}">👥 Leads</a>
+        <a href="{{ url_for('pipeline.index') }}">🧩 Pipeline</a>
+
+        <div class="menu-section">Operação</div>
+        <a href="{{ url_for('financeiro.index') }}">💰 Financeiro</a>
+        <a href="{{ url_for('agenda.index') }}">📅 Agenda</a>
+        <a href="{{ url_for('metas.index') }}">🎯 Metas</a>
+        <a href="{{ url_for('relatorios.index') }}">📄 Relatórios</a>
+        <a href="{{ url_for('usuarios.lista') }}">👤 Usuários</a>
+
+        <div class="menu-section">Inteligência</div>
+        <a href="{{ url_for('ia_sdr.index') }}">🤖 IA SDR</a>
+
+        <a href="{{ url_for('whatsapp_inbox.inbox') }}">
+            💬 Inbox WhatsApp
+            {% if total_whatsapp_nao_lidas and total_whatsapp_nao_lidas > 0 %}
+                <span style="
+                    margin-left:auto;
+                    background:#ef4444;
+                    color:#fff;
+                    font-size:11px;
+                    padding:3px 7px;
+                    border-radius:999px;
+                    font-weight:bold;
+                ">
+                    {{ total_whatsapp_nao_lidas }}
+                </span>
+            {% endif %}
+        </a>
+
+        <div class="menu-section">Configurações</div>
+        <a href="{{ url_for('config.empresa') }}">🏢 Empresa</a>
+        <a href="{{ url_for('config.whatsapp') }}">⚙️ WhatsApp API</a>
+
+        <hr>
+
+        <a class="logout-link" href="{{ url_for('auth.logout') }}">🚪 Sair</a>
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+        navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
+            .then(function () {
+                console.log("PWA CRM360 ativo");
+            })
+            .catch(function (erro) {
+                console.log("Erro ao ativar PWA:", erro);
+            });
+    });
+}
+</script>
+
+</body>
+</html>

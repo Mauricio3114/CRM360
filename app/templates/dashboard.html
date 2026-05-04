@@ -1,0 +1,843 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | CRM360{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .dash-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,.25);
+    }
+
+    .dash-hero h2 {
+        margin: 0 0 8px;
+        font-size: 30px;
+    }
+
+    .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        background: linear-gradient(180deg, #020617, #0b1220);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 14px 30px rgba(0,0,0,.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 4px;
+        width: 100%;
+    }
+
+    .metric-card.leads::before { background: #38bdf8; }
+    .metric-card.novos::before { background: #f97316; }
+    .metric-card.negociacao::before { background: #f59e0b; }
+    .metric-card.conversao::before { background: #22c55e; }
+    .metric-card.tarefas::before { background: #a855f7; }
+
+    .metric-card span {
+        color: #94a3b8;
+        font-size: 14px;
+    }
+
+    .metric-card h1 {
+        margin: 12px 0 0;
+        font-size: 36px;
+    }
+
+    .metric-badge {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .badge-blue { background: rgba(56,189,248,.15); color: #38bdf8; }
+    .badge-orange { background: rgba(249,115,22,.16); color: #fb923c; }
+    .badge-yellow { background: rgba(245,158,11,.16); color: #fbbf24; }
+    .badge-green { background: rgba(34,197,94,.16); color: #22c55e; }
+    .badge-purple { background: rgba(168,85,247,.16); color: #c084fc; }
+    .badge-red { background: rgba(239,68,68,.16); color: #f87171; }
+
+    .finance-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .finance-card {
+        background: linear-gradient(180deg, #020617, #0b1220);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 14px 30px rgba(0,0,0,.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .finance-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 4px;
+        width: 100%;
+    }
+
+    .finance-card.entrada::before { background: #22c55e; }
+    .finance-card.saida::before { background: #ef4444; }
+    .finance-card.lucro::before { background: #38bdf8; }
+
+    .finance-card span {
+        color: #94a3b8;
+        font-size: 14px;
+    }
+
+    .finance-card h1 {
+        margin: 12px 0 0;
+        font-size: 30px;
+    }
+
+    .premium-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 16px 35px rgba(0,0,0,.25);
+    }
+
+    .premium-title {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:15px;
+        margin-bottom:15px;
+    }
+
+    .premium-title h3 {
+        margin:0;
+    }
+
+    .premium-btn {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color:#001b0b;
+        padding:10px 14px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:bold;
+        display:inline-block;
+        margin: 0 8px 10px 0;
+        box-shadow: 0 8px 18px rgba(34,197,94,.18);
+    }
+
+    .premium-btn.dark {
+        background: #1e293b;
+        color:#fff;
+    }
+
+    .premium-btn.orange {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color:#111827;
+    }
+
+    .premium-btn.blue {
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        color:#02131f;
+    }
+
+    .premium-btn.purple {
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        color:#fff;
+    }
+
+    .two-col {
+        display:grid;
+        grid-template-columns: 2fr 1fr;
+        gap:18px;
+    }
+
+    .half-col {
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:18px;
+    }
+
+    .progress-row {
+        margin-bottom:14px;
+    }
+
+    .progress-top {
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:6px;
+        color:#cbd5e1;
+    }
+
+    .stage-badge {
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .stage-novo { background: rgba(249,115,22,.16); color:#fb923c; }
+    .stage-contato { background: rgba(56,189,248,.16); color:#38bdf8; }
+    .stage-proposta { background: rgba(168,85,247,.16); color:#c084fc; }
+    .stage-negociacao { background: rgba(245,158,11,.16); color:#fbbf24; }
+    .stage-fechado { background: rgba(34,197,94,.16); color:#22c55e; }
+    .stage-perdido { background: rgba(239,68,68,.16); color:#f87171; }
+
+    .progress-bg {
+        height:10px;
+        background:#111827;
+        border-radius:999px;
+        overflow:hidden;
+        border:1px solid #1f2937;
+    }
+
+    .progress-fill {
+        height:100%;
+        border-radius:999px;
+    }
+
+    .fill-novo { background: linear-gradient(90deg, #f97316, #fb923c); }
+    .fill-contato { background: linear-gradient(90deg, #38bdf8, #0ea5e9); }
+    .fill-proposta { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+    .fill-negociacao { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .fill-fechado { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .fill-perdido { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+
+    .chart-box {
+        height: 260px;
+    }
+
+    table tr:hover {
+        background:#0f172a;
+    }
+
+    .task-pill {
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        background: rgba(249,115,22,.16);
+        color: #fb923c;
+    }
+
+    .status-pill {
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        display: inline-block;
+    }
+
+    .status-pendente {
+        background: rgba(245,158,11,.16);
+        color: #fbbf24;
+    }
+
+    .status-concluida {
+        background: rgba(34,197,94,.16);
+        color: #22c55e;
+    }
+
+    .status-atrasada {
+        background: rgba(239,68,68,.16);
+        color: #f87171;
+    }
+
+    .task-filter {
+        background: #0f172a;
+        color: #fff;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 9px 12px;
+        margin: 8px 0 15px;
+    }
+
+    .alert-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .alert-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 16px 18px;
+        box-shadow: 0 14px 30px rgba(0,0,0,.22);
+    }
+
+    .alert-red {
+        border-left: 4px solid #ef4444;
+    }
+
+    .alert-yellow {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .finance-pill-entrada {
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        background: rgba(34,197,94,.16);
+        color: #22c55e;
+    }
+
+    .finance-pill-saida {
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        background: rgba(239,68,68,.16);
+        color: #f87171;
+    }
+
+    .ranking-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 15px;
+    }
+
+    .ranking-card {
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 16px;
+        transition: .2s;
+    }
+
+    .ranking-card:hover {
+        transform: translateY(-4px);
+        border-color: #22c55e;
+        box-shadow: 0 10px 25px rgba(34,197,94,.15);
+    }
+
+    .ranking-card h4 {
+        margin: 0 0 8px;
+    }
+
+    .ranking-number {
+        font-size: 26px;
+        font-weight: bold;
+        margin: 6px 0;
+        color: #22c55e;
+    }
+
+    .ranking-pill {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        background: rgba(34,197,94,.16);
+        color: #22c55e;
+    }
+</style>
+
+<div class="dash-hero">
+    <h2>Dashboard CRM360</h2>
+    <p style="color:#cbd5e1; margin:0;">Bem-vindo, {{ current_user.nome }}. Resumo inteligente da operação comercial.</p>
+</div>
+
+{% if tarefas_atrasadas > 0 or tarefas_hoje > 0 %}
+<div class="alert-grid">
+    {% if tarefas_atrasadas > 0 %}
+    <div class="alert-card alert-red">
+        <strong style="color:#f87171;">⚠️ {{ tarefas_atrasadas }} tarefa(s) atrasada(s)</strong>
+        <p style="color:#94a3b8; margin:6px 0 0;">Revise os follow-ups vencidos para não perder oportunidades.</p>
+    </div>
+    {% endif %}
+
+    {% if tarefas_hoje > 0 %}
+    <div class="alert-card alert-yellow">
+        <strong style="color:#fbbf24;">⏰ {{ tarefas_hoje }} tarefa(s) para hoje</strong>
+        <p style="color:#94a3b8; margin:6px 0 0;">Acompanhe ligações, reuniões e retornos do dia.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if mensagens_nao_lidas > 0 %}
+<div class="alert-grid">
+    <div class="alert-card alert-red">
+        <strong style="color:#f87171;">
+            📲 {{ mensagens_nao_lidas }} mensagem(ns) sem resposta
+        </strong>
+        <p style="color:#94a3b8; margin:6px 0 0;">
+            Clientes aguardando resposta no WhatsApp.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<div class="dash-grid">
+    <div class="metric-card leads">
+        <span>Total de leads</span>
+        <h1>{{ total_leads }}</h1>
+        <div class="metric-badge badge-blue">Base comercial</div>
+    </div>
+
+    <div class="metric-card novos">
+        <span>Leads novos</span>
+        <h1>{{ leads_novos }}</h1>
+        <div class="metric-badge badge-orange">Entrada</div>
+    </div>
+
+    <div class="metric-card negociacao">
+        <span>Em negociação</span>
+        <h1>{{ em_negociacao }}</h1>
+        <div class="metric-badge badge-yellow">Atenção</div>
+    </div>
+
+    <div class="metric-card conversao">
+        <span>Conversões</span>
+        <h1>{{ conversoes }}</h1>
+        <div class="metric-badge badge-green">Fechados</div>
+    </div>
+
+    <div class="metric-card tarefas">
+        <span>Tarefas pendentes</span>
+        <h1>{{ tarefas_pendentes }}</h1>
+        <div class="metric-badge badge-purple">Follow-up</div>
+    </div>
+</div>
+
+<div class="finance-grid">
+    <div class="finance-card entrada">
+        <span>Entradas financeiras</span>
+        <h1>R$ {{ "%.2f"|format(total_entradas) }}</h1>
+        <div class="metric-badge badge-green">Receitas</div>
+    </div>
+
+    <div class="finance-card saida">
+        <span>Saídas financeiras</span>
+        <h1>R$ {{ "%.2f"|format(total_saidas) }}</h1>
+        <div class="metric-badge badge-red">Despesas</div>
+    </div>
+
+    <div class="finance-card lucro">
+        <span>Lucro financeiro</span>
+        <h1>R$ {{ "%.2f"|format(lucro) }}</h1>
+        <div class="metric-badge badge-blue">Resultado</div>
+    </div>
+</div>
+
+{% if ranking_vendedores %}
+<div class="premium-card">
+    <h3>🔥 Destaque do mês</h3>
+
+    <h2 style="margin-top:10px;">
+        {{ ranking_vendedores[0].usuario.nome }}
+    </h2>
+
+    <p style="color:#94a3b8;">
+        Liderando com {{ ranking_vendedores[0].vendas_fechadas }} venda(s)
+    </p>
+
+    <a class="premium-btn" href="{{ url_for('pipeline.index', vendedor_id=ranking_vendedores[0].usuario.id) }}">
+        Ver pipeline do vendedor
+    </a>
+</div>
+{% endif %}
+
+<div class="premium-card">
+    <h3>🏆 Ranking de vendedores</h3>
+    <p style="color:#94a3b8;">Performance da equipe comercial.</p>
+
+    {% if ranking_vendedores %}
+        <div class="ranking-grid">
+            {% for item in ranking_vendedores[:4] %}
+                <a class="ranking-card"
+                   href="{{ url_for('pipeline.index', vendedor_id=item.usuario.id) }}"
+                   style="text-decoration:none; color:inherit; display:block;">
+
+                    <h4>🏅 {{ item.usuario.nome }}</h4>
+
+                    <div class="ranking-number">
+                        R$ {{ "%.2f"|format(item.receita) }}
+                    </div>
+
+                    <p style="color:#22c55e; font-size:14px; margin:4px 0;">
+                        Comissão: R$ {{ "%.2f"|format(item.comissao) }}
+                    </p>
+
+                    <span class="ranking-pill">
+                        {{ item.vendas_fechadas }} venda(s)
+                    </span>
+
+                    <p style="color:#94a3b8; font-size:13px; margin-top:10px;">
+                        Leads: {{ item.total_leads }}<br>
+                        Ligações: {{ item.ligacoes }}<br>
+                        Follow-ups: {{ item.followups }}
+                    </p>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color:#64748b;">Sem dados ainda.</p>
+    {% endif %}
+</div>
+
+<div class="two-col">
+    <div class="premium-card">
+        <div class="premium-title">
+            <div>
+                <h3>Funil comercial</h3>
+                <p style="color:#94a3b8; margin:6px 0 0;">Leads distribuídos por etapa.</p>
+            </div>
+            <a class="premium-btn" href="{{ url_for('pipeline.index') }}">Abrir Pipeline</a>
+        </div>
+
+        {% for item in resumo_pipeline %}
+            {% set percentual = (item.quantidade / total_leads * 100) if total_leads > 0 else 0 %}
+            {% set etapa_classe = "fill-novo" %}
+            {% set badge_classe = "stage-novo" %}
+
+            {% if item.nome == "Contato Feito" %}
+                {% set etapa_classe = "fill-contato" %}
+                {% set badge_classe = "stage-contato" %}
+            {% elif item.nome == "Proposta" %}
+                {% set etapa_classe = "fill-proposta" %}
+                {% set badge_classe = "stage-proposta" %}
+            {% elif item.nome == "Negociação" %}
+                {% set etapa_classe = "fill-negociacao" %}
+                {% set badge_classe = "stage-negociacao" %}
+            {% elif item.nome == "Fechado" %}
+                {% set etapa_classe = "fill-fechado" %}
+                {% set badge_classe = "stage-fechado" %}
+            {% elif item.nome == "Perdido" %}
+                {% set etapa_classe = "fill-perdido" %}
+                {% set badge_classe = "stage-perdido" %}
+            {% endif %}
+
+            <div class="progress-row">
+                <div class="progress-top">
+                    <strong><span class="stage-badge {{ badge_classe }}">{{ item.nome }}</span></strong>
+                    <span>{{ item.quantidade }}</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill {{ etapa_classe }}" style="width: {{ percentual }}%;"></div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="premium-card">
+        <h3>Metas comerciais</h3>
+        <p style="color:#94a3b8;">Acompanhe o progresso das metas financeiras.</p>
+
+        {% if metas and metas|length > 0 %}
+            {% for item in metas[:3] %}
+            <div style="margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <strong>{{ item.meta.nome }}</strong>
+                    <span>{{ "%.0f"|format(item.progresso) }}%</span>
+                </div>
+
+                <div style="background:#1e293b; height:8px; border-radius:6px; margin:6px 0;">
+                    <div style="
+                        width: {{ item.progresso }}%;
+                        height: 8px;
+                        border-radius: 6px;
+                        background: linear-gradient(90deg, #22c55e, #16a34a);
+                    "></div>
+                </div>
+
+                <div style="font-size:12px; color:#94a3b8;">
+                    R$ {{ "%.2f"|format(item.realizado) }} / R$ {{ "%.2f"|format(item.meta.valor_meta) }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:#64748b;">Nenhuma meta cadastrada ainda.</p>
+        {% endif %}
+
+        <br>
+        <a class="btn" href="{{ url_for('metas.index') }}">Ver metas</a>
+    </div>
+</div>
+
+<div class="premium-card">
+    <div class="premium-title">
+        <div>
+            <h3>📲 WhatsApp</h3>
+            <p style="color:#94a3b8; margin:6px 0 0;">Central de atendimento e respostas.</p>
+        </div>
+        <a class="premium-btn green" href="{{ url_for('whatsapp_inbox.inbox') }}">
+            Abrir Inbox
+        </a>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin-top:15px;">
+
+        <div class="metric-card">
+            <span>Recebidas</span>
+            <h1>{{ mensagens_recebidas }}</h1>
+        </div>
+
+        <div class="metric-card">
+            <span>Enviadas</span>
+            <h1>{{ mensagens_enviadas }}</h1>
+        </div>
+
+        <div class="metric-card" style="border:1px solid #ef4444;">
+            <span style="color:#f87171;">Não respondidas</span>
+            <h1 style="color:#f87171;">{{ mensagens_nao_lidas }}</h1>
+        </div>
+
+    </div>
+</div>
+
+<div class="half-col">
+    <div class="premium-card">
+        <h3>Leads por origem</h3>
+        <p style="color:#94a3b8;">Canais que estão gerando oportunidades.</p>
+        <div class="chart-box">
+            <canvas id="graficoOrigem"></canvas>
+        </div>
+    </div>
+
+    <div class="premium-card">
+        <h3>Leads por produto</h3>
+        <p style="color:#94a3b8;">Produtos ou serviços com mais interesse.</p>
+        <div class="chart-box">
+            <canvas id="graficoProduto"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div class="premium-card">
+        <h3>Tarefas</h3>
+        <p style="color:#94a3b8;">Follow-ups, ligações e reuniões que precisam de atenção.</p>
+
+        <select id="filtroTarefa" class="task-filter">
+            <option value="todas">Todas</option>
+            <option value="pendente">Pendentes</option>
+            <option value="concluida">Concluídas</option>
+            <option value="futura">Futuras</option>
+            <option value="atrasada">Atrasadas</option>
+        </select>
+
+        {% if proximas_tarefas %}
+            <table id="tabelaTarefas">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tarefa</th>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                        <th>Lead</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tarefa in proximas_tarefas %}
+                    <tr
+                        data-status="{{ tarefa.status }}"
+                        data-data="{{ tarefa.data_tarefa.strftime('%Y-%m-%d') }}"
+                    >
+                        <td>{{ tarefa.data_tarefa.strftime("%d/%m/%Y %H:%M") }}</td>
+                        <td>
+                            <strong>{{ tarefa.titulo }}</strong><br>
+                            <small style="color:#94a3b8;">{{ tarefa.descricao or "" }}</small>
+                        </td>
+                        <td><span class="task-pill">{{ tarefa.tipo }}</span></td>
+                        <td>
+                            {% if tarefa.status == "concluida" %}
+                                <span class="status-pill status-concluida">Concluída</span>
+                            {% else %}
+                                <span class="status-pill status-pendente">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tarefa.lead %}
+                                <a style="color:#22c55e;" href="{{ url_for('leads.detalhe', lead_id=tarefa.lead.id) }}">
+                                    {{ tarefa.lead.nome }}
+                                </a>
+                            {% else %}
+                                Sem lead
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p id="semTarefasFiltro" style="display:none; color:#64748b;">Nenhuma tarefa encontrada para este filtro.</p>
+        {% else %}
+            <p style="color:#64748b;">Nenhuma tarefa cadastrada.</p>
+        {% endif %}
+    </div>
+
+    <div class="premium-card">
+        <h3>Últimos lançamentos financeiros</h3>
+        <p style="color:#94a3b8;">Resumo das últimas entradas e saídas.</p>
+
+        {% if ultimos_lancamentos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in ultimos_lancamentos %}
+                    <tr>
+                        <td>
+                            {% if item.tipo == "entrada" %}
+                                <span class="finance-pill-entrada">Entrada</span>
+                            {% else %}
+                                <span class="finance-pill-saida">Saída</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.descricao }}</td>
+                        <td>R$ {{ "%.2f"|format(item.valor) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color:#64748b;">Nenhum lançamento financeiro ainda.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const origemLabels = {{ origem_resultado.keys()|list|tojson }};
+    const origemDados = {{ origem_resultado.values()|list|tojson }};
+
+    const produtoLabels = {{ produto_resultado.keys()|list|tojson }};
+    const produtoDados = {{ produto_resultado.values()|list|tojson }};
+
+    const coresPremium = [
+        "#38bdf8",
+        "#f97316",
+        "#22c55e",
+        "#a855f7",
+        "#f59e0b",
+        "#ef4444",
+        "#14b8a6"
+    ];
+
+    new Chart(document.getElementById("graficoOrigem"), {
+        type: "doughnut",
+        data: {
+            labels: origemLabels,
+            datasets: [{
+                data: origemDados,
+                backgroundColor: coresPremium,
+                borderColor: "#020617",
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "58%",
+            plugins: {
+                legend: {
+                    labels: { color: "#cbd5e1" }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById("graficoProduto"), {
+        type: "bar",
+        data: {
+            labels: produtoLabels,
+            datasets: [{
+                label: "Leads",
+                data: produtoDados,
+                backgroundColor: coresPremium,
+                borderColor: "#020617",
+                borderWidth: 2,
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: "#cbd5e1" }, grid: { color: "#111827" } },
+                y: { ticks: { color: "#cbd5e1" }, beginAtZero: true, grid: { color: "#111827" } }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: "#cbd5e1" }
+                }
+            }
+        }
+    });
+
+    const filtroTarefa = document.getElementById("filtroTarefa");
+    const tabelaTarefas = document.getElementById("tabelaTarefas");
+    const semTarefasFiltro = document.getElementById("semTarefasFiltro");
+
+    if (filtroTarefa && tabelaTarefas) {
+        filtroTarefa.addEventListener("change", function () {
+            const tipo = this.value;
+            const linhas = tabelaTarefas.querySelectorAll("tbody tr");
+            const hoje = new Date().toISOString().slice(0, 10);
+            let visiveis = 0;
+
+            linhas.forEach(function (linha) {
+                const status = linha.getAttribute("data-status");
+                const data = linha.getAttribute("data-data");
+
+                let mostrar = false;
+
+                if (tipo === "todas") {
+                    mostrar = true;
+                } else if (tipo === "pendente" && status === "pendente") {
+                    mostrar = true;
+                } else if (tipo === "concluida" && status === "concluida") {
+                    mostrar = true;
+                } else if (tipo === "futura" && status === "pendente" && data > hoje) {
+                    mostrar = true;
+                } else if (tipo === "atrasada" && status === "pendente" && data < hoje) {
+                    mostrar = true;
+                }
+
+                linha.style.display = mostrar ? "" : "none";
+
+                if (mostrar) {
+                    visiveis += 1;
+                }
+            });
+
+            if (semTarefasFiltro) {
+                semTarefasFiltro.style.display = visiveis === 0 ? "block" : "none";
+            }
+        });
+    }
+</script>
+{% endblock %}

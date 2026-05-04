@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .rel-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .rel-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+
+    .rel-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 16px 35px rgba(0,0,0,.25);
+    }
+
+    .rel-card h3 {
+        margin-top: 0;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+        margin: 8px 0 16px;
+    }
+
+    .date-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="rel-hero">
+    <h2 style="margin:0;">Relatórios CRM360</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Exporte leads, vendas, comissões e financeiro em PDF ou Excel.
+    </p>
+</div>
+
+<div class="rel-grid">
+    <div class="rel-card">
+        <h3>📋 Relatório de Leads</h3>
+        <p style="color:#94a3b8;">Base de leads com origem, produto e vendedor responsável.</p>
+
+        <label>Filtrar por vendedor</label>
+        <select class="form-control" id="vendedorLeads">
+            <option value="">Todos os vendedores</option>
+            {% for usuario in usuarios %}
+                <option value="{{ usuario.id }}">{{ usuario.nome }} - {{ usuario.tipo }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="actions">
+            <a class="btn" href="#" onclick="baixarLeadsPDF()">Baixar PDF</a>
+            <a class="btn btn-secondary" href="#" onclick="baixarLeadsExcel()">Baixar Excel</a>
+        </div>
+    </div>
+
+    <div class="rel-card">
+        <h3>💰 Relatório de Vendas</h3>
+        <p style="color:#94a3b8;">Vendas, valores, lead vinculado e vendedor responsável.</p>
+
+        <label>Filtrar por vendedor</label>
+        <select class="form-control" id="vendedorVendas">
+            <option value="">Todos os vendedores</option>
+            {% for usuario in usuarios %}
+                <option value="{{ usuario.id }}">{{ usuario.nome }} - {{ usuario.tipo }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="date-grid">
+            <div>
+                <label>Data início</label>
+                <input class="form-control" type="date" id="inicioVendas">
+            </div>
+            <div>
+                <label>Data fim</label>
+                <input class="form-control" type="date" id="fimVendas">
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn" href="#" onclick="baixarVendasPDF()">Baixar PDF</a>
+            <a class="btn btn-secondary" href="#" onclick="baixarVendasExcel()">Baixar Excel</a>
+        </div>
+    </div>
+
+    <div class="rel-card">
+        <h3>🏆 Relatório de Comissões</h3>
+        <p style="color:#94a3b8;">Comissão automática por vendedor com base nas vendas.</p>
+
+        <label>Filtrar por vendedor</label>
+        <select class="form-control" id="vendedorComissoes">
+            <option value="">Todos os vendedores</option>
+            {% for usuario in usuarios %}
+                <option value="{{ usuario.id }}">{{ usuario.nome }} - {{ usuario.tipo }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="date-grid">
+            <div>
+                <label>Data início</label>
+                <input class="form-control" type="date" id="inicioComissoes">
+            </div>
+            <div>
+                <label>Data fim</label>
+                <input class="form-control" type="date" id="fimComissoes">
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn" href="#" onclick="baixarComissoesPDF()">Baixar PDF</a>
+            <a class="btn btn-secondary" href="#" onclick="baixarComissoesExcel()">Baixar Excel</a>
+        </div>
+    </div>
+
+    <div class="rel-card">
+        <h3>📊 Relatório Financeiro</h3>
+        <p style="color:#94a3b8;">Entradas, saídas, lucro, categorias e lançamentos.</p>
+
+        <label>Tipo</label>
+        <select class="form-control" id="tipoFinanceiro">
+            <option value="">Todos</option>
+            <option value="entrada">Entradas</option>
+            <option value="saida">Saídas</option>
+        </select>
+
+        <div class="date-grid">
+            <div>
+                <label>Data início</label>
+                <input class="form-control" type="date" id="inicioFinanceiro">
+            </div>
+            <div>
+                <label>Data fim</label>
+                <input class="form-control" type="date" id="fimFinanceiro">
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn" href="#" onclick="baixarFinanceiroPDF()">Baixar PDF</a>
+            <a class="btn btn-secondary" href="#" onclick="baixarFinanceiroExcel()">Baixar Excel</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function montarQuery(campos) {
+        const params = new URLSearchParams();
+
+        campos.forEach(function (campo) {
+            const valor = document.getElementById(campo.id).value;
+            if (valor) {
+                params.append(campo.nome, valor);
+            }
+        });
+
+        const query = params.toString();
+        return query ? "?" + query : "";
+    }
+
+    function baixarLeadsPDF() {
+        window.location.href = "{{ url_for('relatorios.leads_pdf') }}" + montarQuery([
+            { id: "vendedorLeads", nome: "vendedor_id" }
+        ]);
+    }
+
+    function baixarLeadsExcel() {
+        window.location.href = "{{ url_for('relatorios.leads_excel') }}" + montarQuery([
+            { id: "vendedorLeads", nome: "vendedor_id" }
+        ]);
+    }
+
+    function baixarVendasPDF() {
+        window.location.href = "{{ url_for('relatorios.vendas_pdf') }}" + montarQuery([
+            { id: "vendedorVendas", nome: "vendedor_id" },
+            { id: "inicioVendas", nome: "data_inicio" },
+            { id: "fimVendas", nome: "data_fim" }
+        ]);
+    }
+
+    function baixarVendasExcel() {
+        window.location.href = "{{ url_for('relatorios.vendas_excel') }}" + montarQuery([
+            { id: "vendedorVendas", nome: "vendedor_id" },
+            { id: "inicioVendas", nome: "data_inicio" },
+            { id: "fimVendas", nome: "data_fim" }
+        ]);
+    }
+
+    function baixarComissoesPDF() {
+        window.location.href = "{{ url_for('relatorios.comissoes_pdf') }}" + montarQuery([
+            { id: "vendedorComissoes", nome: "vendedor_id" },
+            { id: "inicioComissoes", nome: "data_inicio" },
+            { id: "fimComissoes", nome: "data_fim" }
+        ]);
+    }
+
+    function baixarComissoesExcel() {
+        window.location.href = "{{ url_for('relatorios.comissoes_excel') }}" + montarQuery([
+            { id: "vendedorComissoes", nome: "vendedor_id" },
+            { id: "inicioComissoes", nome: "data_inicio" },
+            { id: "fimComissoes", nome: "data_fim" }
+        ]);
+    }
+
+    function baixarFinanceiroPDF() {
+        window.location.href = "{{ url_for('relatorios.financeiro_pdf') }}" + montarQuery([
+            { id: "tipoFinanceiro", nome: "tipo" },
+            { id: "inicioFinanceiro", nome: "data_inicio" },
+            { id: "fimFinanceiro", nome: "data_fim" }
+        ]);
+    }
+
+    function baixarFinanceiroExcel() {
+        window.location.href = "{{ url_for('relatorios.financeiro_excel') }}" + montarQuery([
+            { id: "tipoFinanceiro", nome: "tipo" },
+            { id: "inicioFinanceiro", nome: "data_inicio" },
+            { id: "fimFinanceiro", nome: "data_fim" }
+        ]);
+    }
+</script>
+{% endblock %}

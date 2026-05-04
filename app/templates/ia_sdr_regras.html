@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Regras IA SDR | CRM360{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Central da IA SDR</h2>
+    <p style="color:#94a3b8;">Configure como a IA deve responder, mover leads e criar tarefas automaticamente.</p>
+
+    <a class="btn" href="{{ url_for('ia_sdr.nova') }}">+ Nova regra</a>
+</div>
+
+<div class="card">
+    {% if regras %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Palavras-chave</th>
+                    <th>Pipeline</th>
+                    <th>Tarefa</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regra in regras %}
+                <tr>
+                    <td><strong>{{ regra.nome }}</strong></td>
+                    <td>{{ regra.palavras_chave }}</td>
+                    <td>{{ regra.etapa_pipeline or "Não move" }}</td>
+                    <td>
+                        {% if regra.criar_tarefa %}
+                            Sim - {{ regra.tipo_tarefa }}
+                        {% else %}
+                            Não
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if regra.ativo %}
+                            <span class="badge badge-concluida">Ativa</span>
+                        {% else %}
+                            <span class="badge badge-pendente">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn" href="{{ url_for('ia_sdr.editar', regra_id=regra.id) }}">Editar</a>
+                        <a class="btn btn-secondary" href="{{ url_for('ia_sdr.status', regra_id=regra.id) }}">
+                            Ativar/Inativar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color:#64748b;">Nenhuma regra cadastrada ainda.</p>
+    {% endif %}
+</div>
+{% endblock %}

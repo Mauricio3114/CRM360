@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Lead | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .form-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .form-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        max-width: 720px;
+        box-shadow: 0 16px 35px rgba(0,0,0,.25);
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .form-control::placeholder {
+        color: #64748b;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 22px;
+    }
+</style>
+
+<div class="form-hero">
+    <h2 style="margin:0;">Novo Lead</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">Cadastre uma nova oportunidade comercial no CRM360.</p>
+</div>
+
+<div class="form-card">
+    <form method="POST">
+        <div class="form-group">
+            <label>Nome do lead</label>
+            <input class="form-control" type="text" name="nome" placeholder="Ex: João Silva" required>
+        </div>
+
+        <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input class="form-control" type="text" name="telefone" placeholder="Ex: 85999999999">
+        </div>
+
+        <div class="form-group">
+            <label>Origem do lead</label>
+            <input class="form-control" type="text" name="origem" placeholder="Ex: WhatsApp, Instagram, Indicação">
+        </div>
+
+        <div class="form-group">
+            <label>Produto ou serviço de interesse</label>
+            <input class="form-control" type="text" name="produto" placeholder="Ex: CRM360, consultoria, sistema">
+        </div>
+
+        <div class="form-group">
+            <label>Responsável pelo lead</label>
+            <select class="form-control" name="usuario_id">
+                {% for usuario in usuarios %}
+                    <option value="{{ usuario.id }}" {% if usuario.id == current_user.id %}selected{% endif %}>
+                        {{ usuario.nome }} - {{ usuario.tipo }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn" type="submit">Salvar lead</button>
+            <a class="btn btn-secondary" href="{{ url_for('leads.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Empresa | CRM360{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Criar nova empresa</h2>
+    <p style="color:#94a3b8;">Cadastre a empresa e o primeiro admin do cliente.</p>
+
+    {% if erro %}
+        <div style="background:#7f1d1d; padding:12px; border-radius:10px; margin-bottom:15px;">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        <label>Nome da empresa</label><br>
+        <input name="nome_empresa" required style="width:100%; padding:12px; margin:8px 0 15px; border-radius:10px;">
+
+        <label>Plano</label><br>
+        <select name="plano" style="width:100%; padding:12px; margin:8px 0 15px; border-radius:10px;">
+            <option value="basico">Básico</option>
+            <option value="pro">Pro</option>
+            <option value="premium">Premium</option>
+            <option value="enterprise">Enterprise</option>
+        </select>
+
+        <label>Limite de usuários</label><br>
+        <input type="number" name="limite_usuarios" value="3" required style="width:100%; padding:12px; margin:8px 0 15px; border-radius:10px;">
+
+        <hr style="border-color:#1e293b; margin:22px 0;">
+
+        <label>Nome do admin</label><br>
+        <input name="nome_admin" required style="width:100%; padding:12px; margin:8px 0 15px; border-radius:10px;">
+
+        <label>Email do admin</label><br>
+        <input type="email" name="email_admin" required style="width:100%; padding:12px; margin:8px 0 15px; border-radius:10px;">
+
+        <label>Senha do admin</label><br>
+        <input type="password" name="senha_admin" required style="width:100%; padding:12px; margin:8px 0 20px; border-radius:10px;">
+
+        <button class="btn" type="submit">Criar empresa</button>
+        <a class="btn btn-secondary" href="{{ url_for('master.index') }}">Voltar</a>
+    </form>
+</div>
+{% endblock %}

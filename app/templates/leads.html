@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Leads | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .leads-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .leads-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+
+    .leads-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 22px;
+    }
+
+    .lead-name {
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .lead-badge {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        background: rgba(56,189,248,.16);
+        color: #38bdf8;
+    }
+</style>
+
+<div class="leads-hero">
+    <h2 style="margin:0;">Leads</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Gerencie contatos, oportunidades comerciais e importações em massa.
+    </p>
+
+    <div class="leads-actions">
+        <a class="btn" href="{{ url_for('leads.novo') }}">+ Novo Lead</a>
+        <a class="btn btn-secondary" href="{{ url_for('leads.importar') }}">📥 Importar Excel</a>
+    </div>
+</div>
+
+<div class="leads-card">
+    {% if leads %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Origem</th>
+                    <th>Produto</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>
+                        <span class="lead-name">{{ lead.nome }}</span>
+                    </td>
+                    <td>{{ lead.telefone or "-" }}</td>
+                    <td>
+                        <span class="lead-badge">{{ lead.origem or "Não informado" }}</span>
+                    </td>
+                    <td>{{ lead.produto_interesse or "-" }}</td>
+                    <td>
+                        <a class="btn" href="{{ url_for('leads.detalhe', lead_id=lead.id) }}">
+                            Abrir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color:#64748b;">Nenhum lead cadastrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

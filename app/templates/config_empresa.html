@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Empresa | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .config-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .config-grid {
+        display: grid;
+        grid-template-columns: 1.2fr .8fr;
+        gap: 18px;
+    }
+
+    .config-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .preview-box {
+        background: linear-gradient(135deg, #052e16, #020617);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        text-align: center;
+    }
+
+    .logo-preview {
+        width: 95px;
+        height: 95px;
+        border-radius: 20px;
+        object-fit: cover;
+        border: 1px solid #334155;
+        background: #111827;
+        margin-bottom: 14px;
+    }
+
+    .plan-badge {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(34,197,94,.16);
+        color: #22c55e;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+    }
+</style>
+
+<div class="config-hero">
+    <h2 style="margin:0;">Configuração da Empresa</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Personalize o CRM360 com nome, logo, plano e limite de usuários.
+    </p>
+</div>
+
+<div class="config-grid">
+    <div class="config-card">
+        <form method="POST">
+            <div class="form-group">
+                <label>Nome da empresa</label>
+                <input class="form-control" type="text" name="nome" value="{{ empresa.nome or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Logo da empresa</label>
+                <input class="form-control" type="text" name="logo" value="{{ empresa.logo or '' }}" placeholder="Cole a URL da logo">
+            </div>
+
+            <div class="form-group">
+                <label>Plano</label>
+                <select class="form-control" name="plano">
+                    <option value="basico" {% if empresa.plano == "basico" %}selected{% endif %}>Básico</option>
+                    <option value="pro" {% if empresa.plano == "pro" %}selected{% endif %}>Pro</option>
+                    <option value="premium" {% if empresa.plano == "premium" %}selected{% endif %}>Premium</option>
+                    <option value="enterprise" {% if empresa.plano == "enterprise" %}selected{% endif %}>Enterprise</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Limite de usuários</label>
+                <input class="form-control" type="number" name="limite_usuarios" min="1" value="{{ empresa.limite_usuarios or 3 }}">
+            </div>
+
+            <div class="actions">
+                <button class="btn" type="submit">Salvar configurações</button>
+                <a class="btn btn-secondary" href="{{ url_for('dashboard.home') }}">Voltar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="preview-box">
+        {% if empresa.logo %}
+            <img class="logo-preview" src="{{ empresa.logo }}" alt="Logo">
+        {% else %}
+            <div class="logo-preview" style="display:flex; align-items:center; justify-content:center; margin-left:auto; margin-right:auto; font-size:38px;">
+                🏢
+            </div>
+        {% endif %}
+
+        <h2 style="margin:0;">{{ empresa.nome }}</h2>
+        <p style="color:#94a3b8; margin:8px 0 0;">CRM360 personalizado para sua operação.</p>
+
+        <span class="plan-badge">
+            Plano {{ empresa.plano or "basico" }}
+        </span>
+
+        <p style="color:#94a3b8; margin-top:16px;">
+            Limite: {{ empresa.limite_usuarios or 3 }} usuário(s)
+        </p>
+    </div>
+</div>
+{% endblock %}

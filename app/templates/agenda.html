@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Agenda | CRM360{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Agenda e Follow-ups</h2>
+    <p style="color:#94a3b8;">Controle retornos, ligações, reuniões e tarefas comerciais.</p>
+
+    <a class="btn" href="{{ url_for('agenda.nova') }}">+ Novo lembrete</a>
+</div>
+
+<div class="card">
+    {% if tarefas %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Lead</th>
+                    <th>WhatsApp auto</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarefa in tarefas %}
+                <tr>
+                    <td>{{ tarefa.data_tarefa.strftime("%d/%m/%Y %H:%M") }}</td>
+                    <td>
+                        <strong>{{ tarefa.titulo }}</strong><br>
+                        <small style="color:#94a3b8;">{{ tarefa.descricao or "" }}</small>
+
+                        {% if tarefa.enviar_whatsapp %}
+                            <br>
+                            <small style="color:#22c55e;">
+                                Mensagem: {{ tarefa.mensagem_whatsapp or "Mensagem padrão" }}
+                            </small>
+                        {% endif %}
+                    </td>
+                    <td>{{ tarefa.tipo }}</td>
+                    <td>
+                        {% if tarefa.lead %}
+                            <a style="color:#22c55e;" href="{{ url_for('leads.detalhe', lead_id=tarefa.lead.id) }}">
+                                {{ tarefa.lead.nome }}
+                            </a>
+                        {% else %}
+                            Sem lead
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tarefa.enviar_whatsapp %}
+                            <span class="badge badge-concluida">Sim</span>
+                        {% else %}
+                            <span class="badge badge-pendente">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tarefa.status == "concluida" %}
+                            <span class="badge badge-concluida">Concluída</span>
+                        {% else %}
+                            <span class="badge badge-pendente">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tarefa.status == "concluida" %}
+                            <a class="btn btn-secondary" href="{{ url_for('agenda.reabrir', tarefa_id=tarefa.id) }}">Reabrir</a>
+                        {% else %}
+                            <a class="btn" href="{{ url_for('agenda.concluir', tarefa_id=tarefa.id) }}">Concluir</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color:#64748b;">Nenhum lembrete cadastrado ainda.</p>
+    {% endif %}
+</div>
+{% endblock %}

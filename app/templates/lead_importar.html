@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Leads | CRM360{% endblock %}
+
+{% block content %}
+<style>
+    .import-hero {
+        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        margin-bottom: 20px;
+    }
+
+    .import-card {
+        background: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 26px;
+        max-width: 780px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #fff;
+        box-sizing: border-box;
+    }
+
+    .info-box {
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 18px;
+        color: #cbd5e1;
+    }
+
+    .success-box {
+        background: rgba(34,197,94,.12);
+        border: 1px solid rgba(34,197,94,.35);
+        color: #22c55e;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 18px;
+        font-weight: bold;
+    }
+
+    .error-box {
+        background: rgba(239,68,68,.12);
+        border: 1px solid rgba(239,68,68,.35);
+        color: #f87171;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 18px;
+        font-weight: bold;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="import-hero">
+    <h2 style="margin:0;">Importar Leads por Excel</h2>
+    <p style="color:#94a3b8; margin:8px 0 0;">
+        Envie uma planilha e transforme contatos em leads automaticamente.
+    </p>
+</div>
+
+<div class="import-card">
+    {% if sucesso %}
+        <div class="success-box">{{ sucesso }}</div>
+    {% endif %}
+
+    {% if erro %}
+        <div class="error-box">{{ erro }}</div>
+    {% endif %}
+
+    <div class="info-box">
+        <strong>Modelo da planilha:</strong>
+        <p style="margin:8px 0 0;">
+            A primeira linha deve ter os títulos. A partir da segunda linha, use esta ordem:
+        </p>
+        <p style="margin:8px 0 0; color:#94a3b8;">
+            <strong>Nome | Telefone | Email | Origem | Produto</strong>
+        </p>
+        <div class="info-box">
+            <strong>Modelo da planilha:</strong>
+            <p style="margin:8px 0 0;">
+                A primeira linha deve ter os títulos. A partir da segunda linha, use esta ordem:
+            </p>
+            <p style="margin:8px 0 0; color:#94a3b8;">
+                <strong>Nome | Telefone | Email | Origem | Produto</strong>
+            </p>
+
+            <div style="margin-top:12px;">
+                <a class="btn btn-secondary" href="/static/modelo_leads.xlsx">
+                    📥 Baixar modelo de planilha
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Responsável pelos leads importados</label>
+            <select class="form-control" name="usuario_id">
+                {% for usuario in usuarios %}
+                    <option value="{{ usuario.id }}" {% if usuario.id == current_user.id %}selected{% endif %}>
+                        {{ usuario.nome }} - {{ usuario.tipo }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Arquivo Excel</label>
+            <input class="form-control" type="file" name="arquivo" accept=".xlsx,.xlsm" required>
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="submit">Importar leads</button>
+            <a class="btn btn-secondary" href="{{ url_for('leads.lista') }}">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
