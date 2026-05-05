@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("America/Fortaleza")
+
 from urllib.parse import quote
 import os
 import uuid
@@ -178,7 +182,7 @@ def gerar_resposta_ia_whatsapp(empresa, lead, telefone, mensagem_cliente):
             mensagem=resposta_ia,
             tipo_mensagem="texto",
             status=status,
-            criado_em=datetime.utcnow()
+            criado_em=datetime.now(TZ)
         )
 
         db.session.add(msg_ia)
@@ -315,7 +319,7 @@ def nova_manual():
         tipo_mensagem="texto",
         status="recebida",
         lida=False,
-        criado_em=datetime.utcnow()
+        criado_em=datetime.now(TZ)
     )
 
     db.session.add(msg)
@@ -363,7 +367,7 @@ def responder():
         mensagem=mensagem,
         tipo_mensagem="texto",
         status=status,
-        criado_em=datetime.utcnow()
+        criado_em=datetime.now(TZ)
     )
 
     db.session.add(msg)
@@ -486,7 +490,7 @@ def webhook():
                         media_filename=media_filename,
                         status="recebida",
                         lida=False,
-                        criado_em=datetime.utcnow()
+                        criado_em=datetime.now(TZ)
                     )
 
                     db.session.add(msg)

@@ -429,6 +429,50 @@
     </div>
 </div>
 
+<div class="premium-card">
+    <h3>📞 Ligações do dia</h3>
+    <p style="color:#94a3b8;">Acompanhamento das ligações realizadas hoje.</p>
+
+    <div style="margin-top:15px;">
+        <div class="metric-card" style="margin-bottom:15px;">
+            <span>Total de ligações hoje</span>
+            <h1>{{ total_ligacoes_hoje }}</h1>
+            <div class="metric-badge badge-red">Atividade diária</div>
+        </div>
+
+        {% if ligacoes_hoje %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Horário</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in ligacoes_hoje %}
+                    <tr>
+                        <td>{{ item.criado_em.strftime("%H:%M") }}</td>
+                        <td>
+                            {% if item.lead %}
+                                {{ item.lead.nome }}
+                            {% else %}
+                                Sem lead
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-red">📞 Ligação</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color:#64748b;">Nenhuma ligação hoje.</p>
+        {% endif %}
+    </div>
+</div>
+
 <div class="finance-grid">
     <div class="finance-card entrada">
         <span>Entradas financeiras</span>
@@ -503,6 +547,66 @@
     {% else %}
         <p style="color:#64748b;">Sem dados ainda.</p>
     {% endif %}
+</div>
+
+<div class="premium-card">
+    <h3>⚡ Performance Comercial</h3>
+    <p style="color:#94a3b8;">
+        Indicadores de atendimento e resposta dos leads.
+    </p>
+
+    <div class="dash-grid" style="margin-top:15px;">
+
+        <div class="metric-card">
+            <span>Tempo médio de resposta</span>
+            <h2>{{ tempo_medio_resposta }}</h2>
+            <div class="metric-badge badge-green">Atendimento</div>
+        </div>
+
+        <div class="metric-card">
+            <span>Leads sem resposta</span>
+            <h2>{{ total_leads_sem_resposta }}</h2>
+            <div class="metric-badge badge-red">Atenção</div>
+        </div>
+
+        <div class="metric-card">
+            <span>Ligações hoje</span>
+            <h2>{{ total_ligacoes_hoje }}</h2>
+            <div class="metric-badge badge-orange">Atividade</div>
+        </div>
+
+    </div>
+
+    <!-- LISTA DE LEADS SEM RESPOSTA -->
+    <div style="margin-top:20px;">
+        <h4 style="margin-bottom:10px;">🔥 Leads aguardando atendimento</h4>
+
+        {% if leads_sem_resposta_lista %}
+            <table style="width:100%;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Lead</th>
+                        <th style="text-align:left;">Telefone</th>
+                        <th style="text-align:left;">Criado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads_sem_resposta_lista %}
+                    <tr>
+                        <td style="text-align:left;">{{ lead.nome }}</td>
+                        <td style="text-align:left;">{{ lead.telefone or "-" }}</td>
+                        <td style="text-align:left;">
+                            {{ lead.criado_em.strftime("%d/%m %H:%M") if lead.criado_em }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color:#64748b;">Nenhum lead pendente 👌</p>
+        {% endif %}
+    </div>
+
 </div>
 
 <div class="two-col">

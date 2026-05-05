@@ -238,6 +238,10 @@
                 <p><strong>Origem:</strong> {{ lead.origem or "Não informado" }}</p>
                 <p><strong>Produto de interesse:</strong> {{ lead.produto_interesse or "Não informado" }}</p>
                 <p><strong>Responsável:</strong> {{ lead.usuario.nome if lead.usuario else "Não definido" }}</p>
+                <p><strong>Plano:</strong> {{ lead.plano or "Não informado" }}</p>
+                <p><strong>Valor:</strong> R$ {{ "%.2f"|format(lead.valor or 0) }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                <p><strong>Criado em:</strong> {{ lead.criado_em.strftime("%d/%m/%Y %H:%M") if lead.criado_em }}</p>
             </div>
 
             <div class="card">
@@ -261,6 +265,66 @@
                 </form>
             </div>
         </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 Histórico de Etapas</h3>
+        <p style="color:#94a3b8;">
+            Tempo que o lead passou em cada etapa do funil.
+        </p>
+
+        {% if lead.historico_etapas %}
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:8px;">Etapa</th>
+                        <th style="text-align:left; padding:8px;">Entrada</th>
+                        <th style="text-align:left; padding:8px;">Saída</th>
+                        <th style="text-align:left; padding:8px;">Tempo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in lead.historico_etapas %}
+                    <tr>
+                        <td style="padding:8px;">
+                            {{ h.pipeline.nome if h.pipeline else "-" }}
+                        </td>
+
+                        <td style="padding:8px;">
+                            {{ h.entrou_em.strftime("%d/%m %H:%M") if h.entrou_em }}
+                        </td>
+
+                        <td style="padding:8px;">
+                            {% if h.saiu_em %}
+                                {{ h.saiu_em.strftime("%d/%m %H:%M") }}
+                            {% else %}
+                                <span style="color:#38bdf8;">Atual</span>
+                            {% endif %}
+                        </td>
+
+                        <td style="padding:8px;">
+                            {% if h.tempo_segundos %}
+                                {% set horas = h.tempo_segundos // 3600 %}
+                                {% set minutos = (h.tempo_segundos % 3600) // 60 %}
+
+                                {% if horas > 0 %}
+                                    {{ horas }}h {{ minutos }}min
+                                {% else %}
+                                    {{ minutos }}min
+                                {% endif %}
+                            {% else %}
+                                <span style="color:#facc15;">
+                                    {{ lead.tempo_na_etapa_texto }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color:#64748b;">Nenhum histórico ainda.</p>
+        {% endif %}
     </div>
 
     <div class="card ia-card">
@@ -337,7 +401,11 @@
                 <div class="msg-row {{ direcao }}">
                     <div class="msg-bubble">
                         <div class="msg-tipo">
-                            {{ item.tipo }}
+                            {% if item.tipo == "Ligação" %}
+                                <span style="color:#ef4444; font-weight:bold;">📞 Ligação</span>
+                            {% else %}
+                                {{ item.tipo }}
+                            {% endif %}
                         </div>
 
                         {{ item.descricao }}

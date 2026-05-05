@@ -1,10 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify
 from flask_login import login_required, current_user
+from datetime import datetime
 
 from app import db
 from app.models.pipeline import Pipeline
 from app.models.lead import Lead
 from app.models.usuario import Usuario
+
+from app.models.historico_etapa_lead import HistoricoEtapaLead
 
 pipeline_bp = Blueprint("pipeline", __name__, url_prefix="/pipeline")
 
@@ -43,7 +46,6 @@ def index():
 
     is_admin = current_user.tipo in ["admin", "master"]
 
-    # 🔥 DEFINE QUAL VENDEDOR VER
     if is_admin:
         vendedor_id = request.args.get("vendedor_id")
 
@@ -62,20 +64,18 @@ def index():
         empresa_id=current_user.empresa_id
     ).order_by(Usuario.nome.asc()).all()
 
-    # 🔥 FILTRO REAL DO PIPELINE
     for etapa in etapas:
-
         if vendedor_id:
             etapa.leads = Lead.query.filter_by(
                 empresa_id=current_user.empresa_id,
                 pipeline_id=etapa.id,
                 usuario_id=vendedor_id
-            ).all()
+            ).order_by(Lead.etapa_atualizada_em.asc()).all()
         else:
             etapa.leads = Lead.query.filter_by(
                 empresa_id=current_user.empresa_id,
                 pipeline_id=etapa.id
-            ).all()
+            ).order_by(Lead.etapa_atualizada_em.asc()).all()
 
     return render_template(
         "pipeline.html",
@@ -94,7 +94,6 @@ def mover(lead_id, pipeline_id):
         empresa_id=current_user.empresa_id
     ).first_or_404()
 
-    # 🔥 vendedor só move lead dele
     if current_user.tipo not in ["admin", "master"]:
         if lead.usuario_id != current_user.id:
             return redirect(url_for("pipeline.index"))
@@ -104,8 +103,34 @@ def mover(lead_id, pipeline_id):
         empresa_id=current_user.empresa_id
     ).first_or_404()
 
-    lead.pipeline_id = etapa.id
-    db.session.commit()
+    if lead.pipeline_id != etapa.id:
+
+        # 🔴 FINALIZA ETAPA ANTIGA
+        historico_aberto = HistoricoEtapaLead.query.filter_by(
+            lead_id=lead.id,
+            saiu_em=None
+        ).first()
+
+        if historico_aberto:
+            historico_aberto.saiu_em = datetime.utcnow()
+            historico_aberto.tempo_segundos = int(
+                (historico_aberto.saiu_em - historico_aberto.entrou_em).total_seconds()
+            )
+
+        # 🟢 NOVA ETAPA
+        novo_historico = HistoricoEtapaLead(
+            lead_id=lead.id,
+            pipeline_id=etapa.id,
+            entrou_em=datetime.utcnow(),
+            empresa_id=current_user.empresa_id
+        )
+
+        db.session.add(novo_historico)
+
+        lead.pipeline_id = etapa.id
+        lead.etapa_atualizada_em = datetime.utcnow()
+
+        db.session.commit()
 
     return redirect(url_for("pipeline.index"))
 
@@ -126,7 +151,6 @@ def mover_ajax():
     if not lead:
         return jsonify({"sucesso": False})
 
-    # 🔥 trava vendedor
     if current_user.tipo not in ["admin", "master"]:
         if lead.usuario_id != current_user.id:
             return jsonify({"sucesso": False})
@@ -139,7 +163,33 @@ def mover_ajax():
     if not etapa:
         return jsonify({"sucesso": False})
 
-    lead.pipeline_id = etapa.id
-    db.session.commit()
+    if lead.pipeline_id != etapa.id:
+
+        # 🔴 FINALIZA ETAPA ANTIGA
+        historico_aberto = HistoricoEtapaLead.query.filter_by(
+            lead_id=lead.id,
+            saiu_em=None
+        ).first()
+
+        if historico_aberto:
+            historico_aberto.saiu_em = datetime.utcnow()
+            historico_aberto.tempo_segundos = int(
+                (historico_aberto.saiu_em - historico_aberto.entrou_em).total_seconds()
+            )
+
+        # 🟢 NOVA ETAPA
+        novo_historico = HistoricoEtapaLead(
+            lead_id=lead.id,
+            pipeline_id=etapa.id,
+            entrou_em=datetime.utcnow(),
+            empresa_id=current_user.empresa_id
+        )
+
+        db.session.add(novo_historico)
+
+        lead.pipeline_id = etapa.id
+        lead.etapa_atualizada_em = datetime.utcnow()
+
+        db.session.commit()
 
     return jsonify({"sucesso": True})

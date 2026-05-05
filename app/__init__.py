@@ -29,6 +29,7 @@ def create_app():
     from app.models.lancamento_financeiro import LancamentoFinanceiro
     from app.models.meta import Meta
     from app.models.mensagem_whatsapp import MensagemWhatsApp
+    from app.models.historico_etapa_lead import HistoricoEtapaLead
 
     @app.context_processor
     def inject_whatsapp_badge():
@@ -77,6 +78,31 @@ def create_app():
             )
             db.session.add(master)
             db.session.commit()
+
+    from sqlalchemy import text
+
+    with app.app_context():
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN valor FLOAT DEFAULT 0"))
+        except:
+            pass
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN plano VARCHAR(100)"))
+        except:
+            pass
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN status VARCHAR(30) DEFAULT 'aberto'"))
+        except:
+            pass
+
+        try:
+            db.session.execute(text("ALTER TABLE leads ADD COLUMN criado_em DATETIME"))
+        except:
+            pass
+
+        db.session.commit()
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)

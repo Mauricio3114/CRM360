@@ -286,8 +286,39 @@
                  data-lead-id="{{ lead.id }}">
 
                 <div class="lead-name">{{ lead.nome }}</div>
-                <div class="lead-info">{{ lead.telefone }}</div>
-                <div class="lead-meta">{{ lead.produto_interesse or "Sem produto" }}</div>
+
+                <div class="lead-info">📞 {{ lead.telefone }}</div>
+
+                <div class="lead-meta">
+                    {{ lead.produto_interesse or "Sem produto" }}
+                </div>
+
+                <div class="lead-meta">
+                    💼 Plano: {{ lead.plano or "-" }}
+                </div>
+
+                <div class="lead-meta">
+                    💰 R$ {{ "%.2f"|format(lead.valor or 0) }}
+                </div>
+
+                <div class="lead-meta">
+                    📊 Status: 
+                    {% if lead.status == "fechado" %}
+                        <span style="color:#22c55e;">Fechado</span>
+                    {% elif lead.status == "perdido" %}
+                        <span style="color:#ef4444;">Perdido</span>
+                    {% else %}
+                        <span style="color:#38bdf8;">Aberto</span>
+                    {% endif %}
+                </div>
+
+                <div class="lead-meta">
+                    🕒 Criado: {{ lead.criado_em.strftime("%d/%m %H:%M") if lead.criado_em }}
+                </div>
+
+                <div class="lead-meta">
+                    ⏱️ {{ lead.tempo_na_etapa_texto }}
+                </div>
 
                 {% if lead.usuario %}
                     <span class="responsavel-badge">Resp: {{ lead.usuario.nome }}</span>

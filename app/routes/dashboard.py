@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from datetime import datetime
+from datetime import datetime, date
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("America/Fortaleza")
 
 from app.models.lead import Lead
 from app.models.pipeline import Pipeline
@@ -96,7 +99,7 @@ def home():
         produto_resultado[produto] = produto_resultado.get(produto, 0) + 1
 
     # ===== TAREFAS =====
-    agora = datetime.now()
+    agora = datetime.now(TZ)
 
     if is_admin:
         tarefas_base = Tarefa.query.filter_by(
@@ -230,26 +233,80 @@ def home():
         lida=False
     ).count()
 
+    # ===== LIGAÇÕES HOJE =====
+    hoje = datetime.now(TZ).date()
+
+    ligacoes_hoje_query = Interacao.query.filter(
+        Interacao.empresa_id == current_user.empresa_id,
+        Interacao.tipo == "Ligação"
+    ).all()
+
+    ligacoes_hoje = []
+    total_ligacoes_hoje = 0
+
+    for l in ligacoes_hoje_query:
+        if l.criado_em and l.criado_em.astimezone(TZ).date() == hoje:
+            total_ligacoes_hoje += 1
+            ligacoes_hoje.append(l)
+
+    # ===== TEMPO DE RESPOSTA DO VENDEDOR =====
+    tempos_resposta = []
+    leads_sem_resposta = []
+
+    for lead in leads:
+        primeira_interacao = Interacao.query.filter_by(
+            empresa_id=current_user.empresa_id,
+            lead_id=lead.id
+        ).order_by(Interacao.criado_em.asc()).first()
+
+        if primeira_interacao and lead.criado_em:
+            segundos = int((primeira_interacao.criado_em - lead.criado_em).total_seconds())
+
+            if segundos >= 0:
+                tempos_resposta.append(segundos)
+        else:
+            leads_sem_resposta.append(lead)
+
+    tempo_medio_resposta = "Sem dados"
+
+    if tempos_resposta:
+        media_segundos = sum(tempos_resposta) // len(tempos_resposta)
+        media_minutos = media_segundos // 60
+        media_horas = media_minutos // 60
+
+        if media_horas > 0:
+            tempo_medio_resposta = f"{media_horas}h {media_minutos % 60}min"
+        else:
+            tempo_medio_resposta = f"{media_minutos}min"
+
+    total_leads_sem_resposta = len(leads_sem_resposta)
+    leads_sem_resposta_lista = leads_sem_resposta[:5]
+
     return render_template(
-        "dashboard.html",
-        total_leads=total_leads,
-        leads_novos=leads_novos,
-        em_negociacao=em_negociacao,
-        conversoes=conversoes,
-        resumo_pipeline=resumo_pipeline,
-        origem_resultado=origem_resultado,
-        produto_resultado=produto_resultado,
-        tarefas_pendentes=tarefas_pendentes,
-        tarefas_atrasadas=tarefas_atrasadas,
-        tarefas_hoje=tarefas_hoje,
-        proximas_tarefas=proximas_tarefas,
-        total_entradas=total_entradas,
-        total_saidas=total_saidas,
-        lucro=lucro,
-        ultimos_lancamentos=ultimos_lancamentos,
-        metas=metas_calculadas,
-        ranking_vendedores=ranking_vendedores,
-        mensagens_recebidas=mensagens_recebidas,
-        mensagens_enviadas=mensagens_enviadas,
-        mensagens_nao_lidas=mensagens_nao_lidas
-    )
+    "dashboard.html",
+    total_leads=total_leads,
+    leads_novos=leads_novos,
+    em_negociacao=em_negociacao,
+    conversoes=conversoes,
+    resumo_pipeline=resumo_pipeline,
+    origem_resultado=origem_resultado,
+    produto_resultado=produto_resultado,
+    tarefas_pendentes=tarefas_pendentes,
+    tarefas_atrasadas=tarefas_atrasadas,
+    tarefas_hoje=tarefas_hoje,
+    proximas_tarefas=proximas_tarefas,
+    total_entradas=total_entradas,
+    total_saidas=total_saidas,
+    lucro=lucro,
+    ultimos_lancamentos=ultimos_lancamentos,
+    metas=metas_calculadas,
+    ranking_vendedores=ranking_vendedores,
+    mensagens_recebidas=mensagens_recebidas,
+    mensagens_enviadas=mensagens_enviadas,
+    mensagens_nao_lidas=mensagens_nao_lidas,  # 👈 ESSA VÍRGULA AQUI
+        total_ligacoes_hoje=total_ligacoes_hoje,
+    ligacoes_hoje=ligacoes_hoje,
+    tempo_medio_resposta=tempo_medio_resposta,
+    total_leads_sem_resposta=total_leads_sem_resposta,
+    leads_sem_resposta_lista=leads_sem_resposta_lista,
+)

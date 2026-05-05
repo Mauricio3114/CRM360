@@ -113,6 +113,9 @@ def novo():
     if request.method == "POST":
         usuario_id = request.form.get("usuario_id") or current_user.id
         instagram = request.form.get("instagram", "").strip()
+        plano = request.form.get("plano", "").strip()
+        status = request.form.get("status", "aberto").strip()
+        valor = request.form.get("valor") or 0
 
         lead = Lead(
             nome=request.form["nome"],
@@ -120,11 +123,13 @@ def novo():
             instagram=instagram,
             origem=request.form["origem"],
             produto_interesse=request.form["produto"],
+            plano=plano,
+            valor=float(valor),
+            status=status,
             pipeline_id=primeira_etapa.id if primeira_etapa else None,
             empresa_id=current_user.empresa_id,
             usuario_id=usuario_id
         )
-
         db.session.add(lead)
         db.session.commit()
 
