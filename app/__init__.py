@@ -63,6 +63,21 @@ def create_app():
     with app.app_context():
         db.create_all()
 
+    from app.models.usuario import Usuario
+    from werkzeug.security import generate_password_hash
+
+    with app.app_context():
+        if not Usuario.query.filter_by(email="master@crm360.com").first():
+            master = Usuario(
+                nome="Master CRM",
+                email="master@crm360.com",
+                senha=generate_password_hash("123456"),
+                tipo="master",
+                empresa_id=None
+            )
+            db.session.add(master)
+            db.session.commit()
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(leads_bp)
