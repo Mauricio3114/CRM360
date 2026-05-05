@@ -60,6 +60,9 @@ def create_app():
     from app.routes.usuarios import usuarios_bp
     from app.routes.master import master_bp
 
+    with app.app_context():
+        db.create_all()
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(leads_bp)
