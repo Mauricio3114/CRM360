@@ -139,7 +139,7 @@ def leads_pdf():
 
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
     styles = getSampleStyleSheet()
-    elementos = [Paragraph("Relatório de Leads - CRM360", styles["Title"]), Spacer(1, 12)]
+    elementos = [Paragraph("Relatório de Leads - MaVa CRM", styles["Title"]), Spacer(1, 12)]
 
     dados = [["Nome", "Telefone", "Email", "Origem", "Produto", "Vendedor"]]
 
@@ -166,7 +166,7 @@ def leads_pdf():
     doc.build(elementos)
     buffer.seek(0)
 
-    return send_file(buffer, as_attachment=True, download_name="relatorio_leads_crm360.pdf", mimetype="application/pdf")
+    return send_file(buffer, as_attachment=True, download_name="relatorio_leads_mava_crm.pdf", mimetype="application/pdf")
 
 
 @relatorios_bp.route("/leads/excel")
@@ -208,7 +208,7 @@ def vendas_pdf():
 
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
     styles = getSampleStyleSheet()
-    elementos = [Paragraph("Relatório de Vendas - CRM360", styles["Title"]), Spacer(1, 12)]
+    elementos = [Paragraph("Relatório de Vendas - MaVa CRM", styles["Title"]), Spacer(1, 12)]
 
     total = sum(venda.valor for venda in vendas)
     dados = [["Data", "Descrição", "Valor", "Lead", "Vendedor"]]
@@ -291,7 +291,7 @@ def comissoes_pdf():
 
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
     styles = getSampleStyleSheet()
-    elementos = [Paragraph("Relatório de Comissões - CRM360", styles["Title"]), Spacer(1, 12)]
+    elementos = [Paragraph("Relatório de Comissões - MaVa CRM", styles["Title"]), Spacer(1, 12)]
 
     total_comissao = sum(item["comissao"] for item in linhas)
 
@@ -369,7 +369,7 @@ def financeiro_pdf():
 
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=25, leftMargin=25, topMargin=25, bottomMargin=25)
     styles = getSampleStyleSheet()
-    elementos = [Paragraph("Relatório Financeiro - CRM360", styles["Title"]), Spacer(1, 12)]
+    elementos = [Paragraph("Relatório Financeiro - MaVa CRM", styles["Title"]), Spacer(1, 12)]
 
     total_entradas = sum(l.valor for l in lancamentos if l.tipo == "entrada")
     total_saidas = sum(l.valor for l in lancamentos if l.tipo == "saida")
