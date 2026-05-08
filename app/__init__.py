@@ -30,6 +30,7 @@ def create_app():
     from app.models.meta import Meta
     from app.models.mensagem_whatsapp import MensagemWhatsApp
     from app.models.historico_etapa_lead import HistoricoEtapaLead
+    from app.models.lid_mapping import LidMapping
 
     @app.context_processor
     def inject_whatsapp_badge():
@@ -60,6 +61,7 @@ def create_app():
     from app.routes.relatorios import relatorios_bp
     from app.routes.usuarios import usuarios_bp
     from app.routes.master import master_bp
+    from app.routes.whatsapp_qr import whatsapp_qr_bp
 
     with app.app_context():
         db.create_all()
@@ -117,5 +119,6 @@ def create_app():
     app.register_blueprint(relatorios_bp)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(master_bp)
+    app.register_blueprint(whatsapp_qr_bp)
 
     return app

@@ -1,0 +1,470 @@
+import os
+import requests
+from datetime import datetime
+
+
+class EvolutionAPIService:
+
+    def __init__(self):
+
+        self.base_url = os.getenv(
+            "EVOLUTION_API_URL",
+            "http://localhost:8080"
+        ).rstrip("/")
+
+        self.api_key = os.getenv(
+            "EVOLUTION_API_KEY",
+            "mava123"
+        )
+
+        self.headers = {
+            "apikey": self.api_key,
+            "Content-Type": "application/json"
+        }
+
+    def formatar_numero(self, jid):
+
+        if not jid:
+            return "Contato"
+
+        numero = (
+            jid.replace("@s.whatsapp.net", "")
+            .replace("@lid", "")
+            .replace("@g.us", "")
+        )
+
+        if numero.startswith("55") and len(numero) >= 12:
+
+            ddd = numero[2:4]
+            telefone = numero[4:]
+
+            if len(telefone) == 9:
+                return f"({ddd}) {telefone[:5]}-{telefone[5:]}"
+
+            elif len(telefone) == 8:
+                return f"({ddd}) {telefone[:4]}-{telefone[4:]}"
+
+        return numero
+
+    def formatar_timestamp(self, timestamp):
+
+        try:
+
+            timestamp = int(timestamp)
+
+            if timestamp > 9999999999:
+                timestamp = timestamp / 1000
+
+            data = datetime.fromtimestamp(timestamp)
+
+            return data.strftime("%H:%M")
+
+        except Exception:
+            return "agora"
+
+    def extrair_nome_conversa(self, conversa):
+
+        nome = (
+            conversa.get("name")
+            or conversa.get("pushName")
+            or conversa.get("notify")
+            or conversa.get("contactName")
+            or conversa.get("profileName")
+        )
+
+        remote_jid = conversa.get("remoteJid", "")
+
+        if not nome:
+            nome = self.formatar_numero(remote_jid)
+
+        return nome
+
+    def criar_instancia(self, instance_name="mava_crm"):
+
+        url = f"{self.base_url}/instance/create"
+
+        payload = {
+            "instanceName": instance_name,
+            "integration": "WHATSAPP-BAILEYS",
+            "qrcode": True
+        }
+
+        response = requests.post(
+            url,
+            json=payload,
+            headers=self.headers,
+            timeout=30
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"erro": response.text}
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data
+        }
+
+    def conectar_qr(self, instance_name="mava_crm"):
+
+        url = f"{self.base_url}/instance/connect/{instance_name}"
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=30
+        )
+
+        print("STATUS CONNECT:", response.status_code)
+        print("TEXT CONNECT:", response.text)
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"erro": response.text}
+
+        qr_base64 = None
+        qr_code = None
+        pairing_code = None
+
+        if isinstance(data, dict):
+
+            qr_base64 = data.get("base64")
+            qr_code = data.get("code")
+
+            pairing_code = (
+                data.get("pairingCode")
+                or data.get("pairing_code")
+            )
+
+            qrcode = data.get("qrcode")
+
+            if isinstance(qrcode, dict):
+
+                qr_base64 = (
+                    qr_base64
+                    or qrcode.get("base64")
+                )
+
+                qr_code = (
+                    qr_code
+                    or qrcode.get("code")
+                )
+
+                pairing_code = (
+                    pairing_code
+                    or qrcode.get("pairingCode")
+                    or qrcode.get("pairing_code")
+                )
+
+            elif isinstance(qrcode, str):
+                qr_base64 = qr_base64 or qrcode
+
+        if qr_base64 and not qr_base64.startswith("data:image"):
+            qr_base64 = f"data:image/png;base64,{qr_base64}"
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data,
+            "qr_base64": qr_base64,
+            "qr_code": qr_code,
+            "pairing_code": pairing_code
+        }
+
+    def status_instancia(self, instance_name="mava_crm"):
+
+        url = f"{self.base_url}/instance/connectionState/{instance_name}"
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=30
+        )
+
+        print("STATUS STATE:", response.status_code)
+        print("TEXT STATE:", response.text)
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"erro": response.text}
+
+        estado = None
+
+        if isinstance(data, dict):
+
+            estado = (
+                data.get("state")
+                or data.get("status")
+                or data.get("connection")
+            )
+
+            if isinstance(data.get("instance"), dict):
+                estado = data["instance"].get("state") or estado
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data,
+            "estado": estado
+        }
+
+    def logout_instancia(self, instance_name="mava_crm"):
+
+        url = f"{self.base_url}/instance/logout/{instance_name}"
+
+        response = requests.delete(
+            url,
+            headers=self.headers,
+            timeout=30
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"retorno": response.text}
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data
+        }
+
+    def deletar_instancia(self, instance_name="mava_crm"):
+
+        url = f"{self.base_url}/instance/delete/{instance_name}"
+
+        response = requests.delete(
+            url,
+            headers=self.headers,
+            timeout=30
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"retorno": response.text}
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data
+        }
+
+    def buscar_conversas(self, instance_name="mava_novo"):
+
+        url = f"{self.base_url}/chat/findChats/{instance_name}"
+
+        response = requests.post(
+            url,
+            headers=self.headers,
+            json={},
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = []
+
+        conversas = []
+
+        if isinstance(data, list):
+
+            for conversa in data:
+
+                remote_jid = conversa.get("remoteJid")
+
+                if not remote_jid:
+                    continue
+
+                nome = self.extrair_nome_conversa(conversa)
+
+                ultima_mensagem = (
+                    conversa.get("lastMessage")
+                    or conversa.get("lastMessageText")
+                    or conversa.get("conversation")
+                    or conversa.get("message")
+                    or ""
+                )
+
+                if isinstance(ultima_mensagem, dict):
+                    ultima_mensagem = (
+                        ultima_mensagem.get("conversation")
+                        or ultima_mensagem.get("text")
+                        or ultima_mensagem.get("caption")
+                        or "Nova mensagem"
+                    )
+
+                if not ultima_mensagem:
+                    ultima_mensagem = "Clique para abrir conversa"
+
+                timestamp = (
+                    conversa.get("updatedAt")
+                    or conversa.get("conversationTimestamp")
+                    or conversa.get("messageTimestamp")
+                    or conversa.get("lastMessageTimestamp")
+                    or 0
+                )
+
+                unread_count = (
+                    conversa.get("unreadCount")
+                    or conversa.get("unread_count")
+                    or conversa.get("unreadMessages")
+                    or 0
+                )
+
+                try:
+                    unread_count = int(unread_count)
+                except Exception:
+                    unread_count = 0
+
+                conversa["nome_formatado"] = nome
+
+                conversa["numero_formatado"] = (
+                    self.formatar_numero(remote_jid)
+                )
+
+                conversa["hora_formatada"] = (
+                    self.formatar_timestamp(timestamp)
+                )
+
+                conversa["ultima_mensagem"] = ultima_mensagem
+
+                conversa["timestamp"] = timestamp
+
+                conversa["unread_count"] = unread_count
+
+                conversas.append(conversa)
+
+            conversas = sorted(
+                conversas,
+                key=lambda x: x.get("timestamp", 0),
+                reverse=True
+            )
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": conversas
+        }
+
+    def buscar_mensagens(self, instance_name, remote_jid):
+
+        url = f"{self.base_url}/chat/findMessages/{instance_name}"
+
+        payload = {
+            "where": {
+                "key": {
+                    "remoteJid": remote_jid
+                }
+            }
+        }
+
+        response = requests.post(
+            url,
+            headers=self.headers,
+            json=payload,
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {}
+
+        mensagens = []
+
+        if isinstance(data, dict):
+            mensagens = data.get("messages", {}).get("records", [])
+
+        mensagens_unicas = []
+        ids_vistos = set()
+
+        for msg in mensagens:
+
+            key = msg.get("key", {})
+            msg_id = key.get("id")
+
+            if not msg_id:
+                continue
+
+            if msg_id in ids_vistos:
+                continue
+
+            ids_vistos.add(msg_id)
+
+            timestamp = msg.get("messageTimestamp")
+
+            msg["hora_formatada"] = (
+                self.formatar_timestamp(timestamp)
+            )
+
+            mensagens_unicas.append(msg)
+
+        mensagens_unicas = sorted(
+            mensagens_unicas,
+            key=lambda x: x.get("messageTimestamp", 0)
+        )
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": mensagens_unicas
+        }
+
+    def enviar_mensagem(self, instance_name, remote_jid, mensagem):
+
+        url = f"{self.base_url}/message/sendText/{instance_name}"
+
+        numero = remote_jid or ""
+
+        if "@s.whatsapp.net" in numero:
+            numero = numero.replace("@s.whatsapp.net", "")
+
+        if "@lid" in numero:
+
+            return {
+                "ok": False,
+                "status_code": 400,
+                "data": {
+                    "erro": (
+                        "Este contato veio como @lid. "
+                        "Precisamos mapear o número real."
+                    )
+                }
+            }
+
+        payload = {
+            "number": numero,
+            "text": mensagem
+        }
+
+        response = requests.post(
+            url,
+            headers=self.headers,
+            json=payload,
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+
+        except Exception:
+            data = {"retorno": response.text}
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data
+        }

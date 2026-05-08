@@ -1,0 +1,243 @@
+<div class="chat-top">
+    <div class="chat-top-left">
+        <div class="chat-avatar">
+            {{ nome_contato[:1]|upper }}
+        </div>
+
+        <div class="chat-user-wrap">
+            <div class="chat-user">
+                {{ nome_contato }}
+            </div>
+
+            <div class="chat-sub">
+                Atendimento via Evolution API
+            </div>
+
+            <div class="chat-status">
+                <span class="chat-status-dot"></span>
+                Conectado agora
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-actions">
+        <button class="top-btn main-action" type="button" title="Ligar">📞</button>
+        <button class="top-btn" type="button" title="Vídeo">🎥</button>
+        <button class="top-btn" type="button" title="Buscar">🔍</button>
+        <button class="top-btn" type="button" title="Mais opções">⋮</button>
+    </div>
+</div>
+
+{% if '@lid' in jid_ativo %}
+    <div class="lid-fix-box">
+        <div>
+            <strong>Contato @lid detectado</strong>
+            <small>Informe o número real para enviar mensagens normalmente.</small>
+        </div>
+
+        <form
+            method="POST"
+            action="{{ url_for('whatsapp_qr.salvar_lid') }}"
+            class="lid-fix-form"
+        >
+            <input type="hidden" name="lid_jid" value="{{ jid_ativo }}">
+            <input type="hidden" name="instance_name" value="{{ instance_name }}">
+
+            <input
+                type="text"
+                name="numero_real"
+                placeholder="Ex: 85999999999"
+                required
+            >
+
+            <button type="submit">
+                Corrigir número
+            </button>
+        </form>
+    </div>
+{% endif %}
+
+<div class="chat-box" id="chatBox">
+
+    {% for msg in mensagens %}
+
+        {% set from_me = msg.get('key', {}).get('fromMe') %}
+        {% set texto = None %}
+        {% set tipo_midia = None %}
+        {% set nome_arquivo = None %}
+
+        {% if msg.get('message') %}
+
+            {% set message = msg.get('message') %}
+
+            {% if message.get('conversation') %}
+                {% set texto = message.get('conversation') %}
+            {% endif %}
+
+            {% if not texto and message.get('extendedTextMessage') %}
+                {% set texto = message.get('extendedTextMessage').get('text') %}
+            {% endif %}
+
+            {% if message.get('imageMessage') %}
+                {% set tipo_midia = 'imagem' %}
+                {% set texto = message.get('imageMessage').get('caption') or 'Imagem recebida/enviada' %}
+            {% endif %}
+
+            {% if message.get('audioMessage') %}
+                {% set tipo_midia = 'audio' %}
+                {% set texto = 'Mensagem de áudio' %}
+            {% endif %}
+
+            {% if message.get('videoMessage') %}
+                {% set tipo_midia = 'video' %}
+                {% set texto = message.get('videoMessage').get('caption') or 'Vídeo recebido/enviado' %}
+            {% endif %}
+
+            {% if message.get('documentMessage') %}
+                {% set tipo_midia = 'documento' %}
+                {% set nome_arquivo = message.get('documentMessage').get('fileName') or 'Documento' %}
+                {% set texto = nome_arquivo %}
+            {% endif %}
+
+        {% endif %}
+
+        {% if texto %}
+
+            <div class="msg {% if from_me %}me{% else %}other{% endif %}">
+                <div class="msg-content">
+
+                    {% if tipo_midia == 'imagem' %}
+
+                        <div class="media-preview media-image">
+                            <div class="media-icon">📷</div>
+                            <div>
+                                <strong>Imagem</strong>
+                                <small>{{ texto }}</small>
+                            </div>
+                        </div>
+
+                    {% elif tipo_midia == 'audio' %}
+
+                        <div class="media-preview media-audio">
+                            <div class="media-icon">▶</div>
+                            <div>
+                                <strong>Áudio</strong>
+                                <small>Mensagem de voz recebida/enviada</small>
+                            </div>
+                        </div>
+
+                    {% elif tipo_midia == 'video' %}
+
+                        <div class="media-preview media-video">
+                            <div class="media-icon">🎬</div>
+                            <div>
+                                <strong>Vídeo</strong>
+                                <small>{{ texto }}</small>
+                            </div>
+                        </div>
+
+                    {% elif tipo_midia == 'documento' %}
+
+                        <div class="media-preview media-doc">
+                            <div class="media-icon">📄</div>
+                            <div>
+                                <strong>Documento</strong>
+                                <small>{{ nome_arquivo }}</small>
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        {{ texto }}
+
+                    {% endif %}
+
+                    <div class="msg-meta">
+
+                        <span class="msg-time">
+                            {{ msg.get('hora_formatada', '') }}
+                        </span>
+
+                        {% if from_me %}
+                            <span class="msg-check">
+                                ✓✓
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+            </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
+
+<form
+    class="chat-send"
+    id="chatSendForm"
+    data-jid="{{ jid_ativo }}"
+    action="{{ url_for('whatsapp_qr.enviar_chat', jid=jid_ativo, instance_name=instance_name) }}"
+>
+
+    <button type="button" class="chat-action-btn" title="Emoji">
+        😊
+    </button>
+
+    <button
+        type="button"
+        class="chat-action-btn"
+        id="btnRespostas"
+        title="Respostas rápidas"
+    >
+        ⚡
+    </button>
+
+    <button type="button" class="chat-action-btn" title="Anexar">
+        📎
+    </button>
+
+    <div class="quick-replies" id="quickReplies">
+
+        <button type="button" class="quick-btn">
+            Olá 😊
+        </button>
+
+        <button type="button" class="quick-btn">
+            Já vamos atender você.
+        </button>
+
+        <button type="button" class="quick-btn">
+            Pode me enviar mais detalhes?
+        </button>
+
+        <button type="button" class="quick-btn">
+            Vou verificar.
+        </button>
+
+        <button type="button" class="quick-btn">
+            Obrigado pelo contato 🙏
+        </button>
+
+    </div>
+
+    <input
+        type="text"
+        name="mensagem"
+        id="mensagemInput"
+        placeholder="Digite uma mensagem..."
+        required
+        autocomplete="off"
+    >
+
+    <button type="button" class="chat-action-btn" title="Áudio">
+        🎤
+    </button>
+
+    <button type="submit" id="btnEnviar">
+        ➤
+    </button>
+
+</form>
