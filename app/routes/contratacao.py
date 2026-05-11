@@ -175,6 +175,7 @@ Bem-vindo ao MaVa CRM.
 
         except Exception as e:
             db.session.rollback()
+            print("ERRO CONTRATAR:", e)
             flash(f"Erro ao criar sua conta: {e}", "danger")
 
     return render_template("contratar.html")
