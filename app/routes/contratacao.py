@@ -84,7 +84,6 @@ def contratar():
 
             empresa = Empresa(
                 nome=empresa_nome,
-                status="ativa",
                 plano=plano
             )
 
