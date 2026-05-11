@@ -4,7 +4,10 @@ from flask_login import login_user, logout_user
 from app import db
 from app.models.usuario import Usuario
 from app.models.empresa import Empresa
+from app.services.assinatura_service import AssinaturaService
+
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -18,7 +21,26 @@ def login():
         user = Usuario.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.senha, senha):
+
             login_user(user)
+
+            if user.empresa_id:
+
+                assinatura = AssinaturaService.assinatura_da_empresa(
+                    user.empresa_id
+                )
+
+                if AssinaturaService.trial_expirado(assinatura):
+
+                    flash(
+                        "Seu teste grátis expirou. Regularize sua assinatura para continuar.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for("assinatura.minha_assinatura")
+                    )
+
             return redirect(url_for("dashboard.home"))
 
         flash("Login inválido")
@@ -41,6 +63,7 @@ def register():
         senha = generate_password_hash(request.form["senha"])
 
         usuario_existente = Usuario.query.filter_by(email=email).first()
+
         if usuario_existente:
             flash("Já existe um usuário com esse e-mail.")
             return redirect(url_for("auth.register"))

@@ -668,6 +668,10 @@
     border:1px solid rgba(255,255,255,.05);
 }
 
+.chat-action-btn input{
+    display:none;
+}
+
 .chat-action-btn:hover{
     transform:translateY(-2px);
 
@@ -800,6 +804,75 @@
 .emoji-picker span:hover{
     transform:scale(1.25);
 }
+
+.msg-prefix{
+    color:#22c55e;
+    font-weight:700;
+    margin-right:4px;
+}
+
+.media-preview{
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    min-width:240px;
+
+    padding:14px;
+
+    border-radius:16px;
+
+    background:rgba(255,255,255,.06);
+
+    margin-bottom:8px;
+}
+
+.media-icon{
+    width:46px;
+    height:46px;
+
+    border-radius:14px;
+
+    background:#22c55e;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+
+    font-size:18px;
+    font-weight:900;
+
+    flex-shrink:0;
+}
+
+.media-preview strong{
+    display:block;
+
+    color:#fff;
+
+    font-size:14px;
+
+    margin-bottom:4px;
+}
+
+.media-preview small{
+    color:#cbd5e1;
+    font-size:12px;
+}
+
+.media-audio .media-icon{
+    background:#0ea5e9;
+}
+
+.msg-content img{
+    max-width:260px;
+
+    border-radius:18px;
+
+    margin-bottom:8px;
+}
 </style>
 
 <div class="whatsapp-page">
@@ -905,7 +978,17 @@
                                 <div class="chat-item-bottom">
 
                                     <div class="chat-last-message">
-                                        {{ ultima[:55] }}
+
+                                        {% if 'Você:' not in ultima and jid == jid_ativo %}
+                                            <span class="msg-prefix">Você:</span>
+                                        {% endif %}
+
+                                        {% if ultima|length > 55 %}
+                                            {{ ultima[:55] }}...
+                                        {% else %}
+                                            {{ ultima }}
+                                        {% endif %}
+
                                     </div>
 
                                     {% if unread > 0 %}
@@ -1166,6 +1249,10 @@ async function carregarChat(jid, rolarFinal=true){
             ativarQuickReplies();
 
             ativarEmoji();
+
+            ativarUploadPreview();
+
+            ativarAudioFake();
 
             renderizarMensagensLocais(jid);
 
@@ -1544,6 +1631,210 @@ setInterval(() => {
     ultimoTotalMensagens = totalAtual;
 
 }, 2500);
+
+function ativarUploadPreview(){
+
+    const arquivoInput =
+        document.getElementById("arquivoInput");
+
+    if(!arquivoInput){
+        return;
+    }
+
+    arquivoInput.onchange = function(){
+
+        const file = this.files[0];
+
+        if(!file){
+            return;
+        }
+
+        const chatBox =
+            document.getElementById("chatBox");
+
+        if(!chatBox){
+            return;
+        }
+
+        const nome = file.name;
+
+        const agora = new Date();
+
+        const hora =
+            agora.getHours().toString().padStart(2,"0");
+
+        const minuto =
+            agora.getMinutes().toString().padStart(2,"0");
+
+        const isImagem =
+            file.type.startsWith("image/");
+
+        const isVideo =
+            file.type.startsWith("video/");
+
+        if(isImagem){
+
+            const reader = new FileReader();
+
+            reader.onload = function(e){
+
+                chatBox.innerHTML += `
+                    <div class="msg me">
+
+                        <div class="msg-content">
+
+                            <img src="${e.target.result}">
+
+                            <div class="msg-meta">
+
+                                <span class="msg-time">
+                                    ${hora}:${minuto}
+                                </span>
+
+                                <span class="msg-check">
+                                    ✓
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                `;
+
+                chatBox.scrollTop =
+                    chatBox.scrollHeight;
+
+            };
+
+            reader.readAsDataURL(file);
+
+        }else{
+
+            chatBox.innerHTML += `
+                <div class="msg me">
+
+                    <div class="msg-content">
+
+                        <div class="media-preview">
+
+                            <div class="media-icon">
+                                📎
+                            </div>
+
+                            <div>
+                                <strong>${nome}</strong>
+
+                                <small>
+                                    Documento enviado
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <div class="msg-meta">
+
+                            <span class="msg-time">
+                                ${hora}:${minuto}
+                            </span>
+
+                            <span class="msg-check">
+                                ✓
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+            chatBox.scrollTop =
+                chatBox.scrollHeight;
+
+        }
+
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
+
+    };
+
+}
+
+ativarUploadPreview();
+
+function ativarAudioFake(){
+
+    const btnAudio =
+        document.getElementById("btnAudio");
+
+    if(!btnAudio){
+        return;
+    }
+
+    btnAudio.onclick = function(){
+
+        const chatBox =
+            document.getElementById("chatBox");
+
+        if(!chatBox){
+            return;
+        }
+
+        const agora = new Date();
+
+        const hora =
+            agora.getHours().toString().padStart(2,"0");
+
+        const minuto =
+            agora.getMinutes().toString().padStart(2,"0");
+
+        chatBox.innerHTML += `
+            <div class="msg me">
+
+                <div class="msg-content">
+
+                    <div class="media-preview media-audio">
+
+                        <div class="media-icon">
+                            ▶
+                        </div>
+
+                        <div>
+                            <strong>Áudio</strong>
+
+                            <small>
+                                Mensagem de voz
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="msg-meta">
+
+                        <span class="msg-time">
+                            ${hora}:${minuto}
+                        </span>
+
+                        <span class="msg-check">
+                            ✓
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
+
+    };
+
+}
+
+ativarAudioFake();
 </script>
 
 {% endblock %}

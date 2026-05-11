@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Assinar MaVa CRM</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            background:#020817;
+            min-height:100vh;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            padding:30px;
+        }
+
+        .card{
+            width:100%;
+            max-width:520px;
+
+            background:#0f172a;
+
+            border-radius:28px;
+
+            padding:35px;
+
+            border:1px solid rgba(255,255,255,.08);
+
+            box-shadow:
+                0 0 45px rgba(0,0,0,.35);
+        }
+
+        h1{
+            color:#fff;
+            font-size:32px;
+            margin-bottom:10px;
+        }
+
+        p{
+            color:#94a3b8;
+            margin-bottom:28px;
+        }
+
+        form{
+            display:flex;
+            flex-direction:column;
+            gap:18px;
+        }
+
+        input, select{
+            height:58px;
+
+            border:none;
+            outline:none;
+
+            border-radius:18px;
+
+            padding:0 18px;
+
+            background:#020817;
+
+            color:#fff;
+
+            border:1px solid rgba(255,255,255,.06);
+
+            font-size:15px;
+        }
+
+        button{
+            height:60px;
+
+            border:none;
+
+            border-radius:18px;
+
+            background:linear-gradient(135deg,#22c55e,#16a34a);
+
+            color:#fff;
+
+            font-size:16px;
+            font-weight:800;
+
+            cursor:pointer;
+
+            margin-top:10px;
+
+            transition:.2s;
+        }
+
+        button:hover{
+            transform:translateY(-2px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="card">
+
+        <h1>Assinar MaVa CRM</h1>
+
+        <p>
+            Crie sua conta e comece agora mesmo.
+        </p>
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="nome"
+                placeholder="Seu nome"
+                required
+            >
+
+            <input
+                type="text"
+                name="empresa"
+                placeholder="Nome da empresa"
+                required
+            >
+
+            <input
+                type="email"
+                name="email"
+                placeholder="Seu e-mail"
+                required
+            >
+
+            <input
+                type="text"
+                name="telefone"
+                placeholder="Telefone / WhatsApp"
+            >
+
+            <select name="plano" required>
+
+                <option value="">
+                    Escolha um plano
+                </option>
+
+                <option value="basico">
+                    Básico - R$97/mês
+                </option>
+
+                <option value="pro">
+                    Pro - R$197/mês
+                </option>
+
+                <option value="premium">
+                    Premium - R$297/mês
+                </option>
+
+            </select>
+
+            <button type="submit">
+                Assinar Agora
+            </button>
+
+        </form>
+
+    </div>
+
+</body>
+</html>

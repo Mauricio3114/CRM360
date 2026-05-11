@@ -1,10 +1,13 @@
-from flask import Flask
+from flask import Flask, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
+from flask_mail import Mail
+from datetime import datetime
 
 from config import Config
 
+mail = Mail()
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
@@ -14,6 +17,7 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
+    mail.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
@@ -31,6 +35,7 @@ def create_app():
     from app.models.mensagem_whatsapp import MensagemWhatsApp
     from app.models.historico_etapa_lead import HistoricoEtapaLead
     from app.models.lid_mapping import LidMapping
+    from app.models.assinatura import Assinatura
 
     @app.context_processor
     def inject_whatsapp_badge():
@@ -48,6 +53,51 @@ def create_app():
 
         return dict(total_whatsapp_nao_lidas=total_whatsapp_nao_lidas)
 
+    @app.before_request
+    def bloquear_trial_expirado():
+        rotas_liberadas = [
+            "auth.login",
+            "auth.logout",
+            "assinatura.minha_assinatura",
+            "assinatura.assinar_agora",
+            "asaas_webhook.webhook_asaas",
+            "static",
+            "contratacao.contratar",
+        ]
+
+        if not current_user.is_authenticated:
+            return None
+
+        if not current_user.empresa_id:
+            return None
+
+        if request.endpoint in rotas_liberadas:
+            return None
+
+        assinatura = Assinatura.query.filter_by(
+            empresa_id=current_user.empresa_id
+        ).order_by(
+            Assinatura.id.desc()
+        ).first()
+
+        if not assinatura:
+            return None
+
+        if assinatura.status == "ativa":
+            return None
+
+        if assinatura.trial_ate and datetime.utcnow() > assinatura.trial_ate:
+            flash(
+                "Seu teste grátis expirou. Assine para continuar usando o MaVa CRM.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("assinatura.minha_assinatura")
+            )
+
+        return None
+
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.leads import leads_bp
@@ -62,6 +112,9 @@ def create_app():
     from app.routes.usuarios import usuarios_bp
     from app.routes.master import master_bp
     from app.routes.whatsapp_qr import whatsapp_qr_bp
+    from app.routes.contratacao import contratacao_bp
+    from app.routes.asaas_webhook import asaas_webhook_bp
+    from app.routes.assinatura import assinatura_bp
 
     with app.app_context():
         db.create_all()
@@ -120,5 +173,8 @@ def create_app():
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(master_bp)
     app.register_blueprint(whatsapp_qr_bp)
+    app.register_blueprint(contratacao_bp)
+    app.register_blueprint(asaas_webhook_bp)
+    app.register_blueprint(assinatura_bp)
 
     return app

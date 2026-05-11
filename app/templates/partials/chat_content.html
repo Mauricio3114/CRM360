@@ -195,9 +195,17 @@
         ⚡
     </button>
 
-    <button type="button" class="chat-action-btn" title="Anexar">
+    <label class="chat-action-btn" title="Anexar">
+
         📎
-    </button>
+
+        <input
+            type="file"
+            id="arquivoInput"
+            hidden
+        >
+
+    </label>
 
     <div class="quick-replies" id="quickReplies">
 
@@ -232,7 +240,12 @@
         autocomplete="off"
     >
 
-    <button type="button" class="chat-action-btn" title="Áudio">
+    <button
+        type="button"
+        class="chat-action-btn"
+        id="btnAudio"
+        title="Áudio"
+    >
         🎤
     </button>
 

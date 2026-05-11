@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Assinatura{% endblock %}
+
+{% block content %}
+
+<style>
+
+.page-assinatura{
+    padding:30px;
+}
+
+.assinatura-card{
+    max-width:850px;
+
+    margin:auto;
+
+    background:#0f172a;
+
+    border-radius:28px;
+
+    padding:35px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 0 40px rgba(0,0,0,.25);
+}
+
+.assinatura-topo{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    gap:20px;
+
+    margin-bottom:30px;
+}
+
+.assinatura-titulo h1{
+    color:#fff;
+    font-size:34px;
+    margin-bottom:10px;
+}
+
+.assinatura-titulo p{
+    color:#94a3b8;
+}
+
+.badge-status{
+    padding:12px 18px;
+
+    border-radius:999px;
+
+    font-size:14px;
+    font-weight:700;
+
+    background:rgba(34,197,94,.15);
+
+    color:#22c55e;
+}
+
+.assinatura-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+}
+
+.info-card{
+    background:#020817;
+
+    border-radius:22px;
+
+    padding:24px;
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+.info-card span{
+    display:block;
+
+    color:#64748b;
+
+    font-size:13px;
+
+    margin-bottom:10px;
+}
+
+.info-card strong{
+    color:#fff;
+    font-size:24px;
+}
+
+.alerta-trial{
+    margin-top:25px;
+
+    padding:20px;
+
+    border-radius:20px;
+
+    background:rgba(234,179,8,.12);
+
+    border:1px solid rgba(234,179,8,.25);
+
+    color:#fde68a;
+}
+
+.assinatura-actions{
+    margin-top:30px;
+
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.btn-assinar{
+    height:56px;
+
+    padding:0 28px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+
+    color:#fff;
+
+    font-size:15px;
+    font-weight:800;
+
+    cursor:pointer;
+}
+
+.btn-sec{
+    height:56px;
+
+    padding:0 28px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:#1e293b;
+
+    color:#fff;
+
+    font-size:15px;
+    font-weight:700;
+
+    cursor:pointer;
+}
+
+</style>
+
+<div class="page-assinatura">
+
+    <div class="assinatura-card">
+
+        <div class="assinatura-topo">
+
+            <div class="assinatura-titulo">
+
+                <h1>
+                    Minha Assinatura
+                </h1>
+
+                <p>
+                    Gerencie seu plano do MaVa CRM
+                </p>
+
+            </div>
+
+            <div class="badge-status">
+                {{ assinatura.status|upper }}
+            </div>
+
+        </div>
+
+        <div class="assinatura-grid">
+
+            <div class="info-card">
+
+                <span>Plano Atual</span>
+
+                <strong>
+                    {{ assinatura.plano|upper }}
+                </strong>
+
+            </div>
+
+            <div class="info-card">
+
+                <span>Status Trial</span>
+
+                <strong>
+                    {{ assinatura.status_trial|upper }}
+                </strong>
+
+            </div>
+
+            <div class="info-card">
+
+                <span>Dias Restantes</span>
+
+                <strong>
+                    {{ dias_restantes }}
+                </strong>
+
+            </div>
+
+            <div class="info-card">
+
+                <span>Valor Mensal</span>
+
+                <strong>
+                    R$ {{ "%.2f"|format(assinatura.valor) }}
+                </strong>
+
+            </div>
+
+        </div>
+
+        <div class="alerta-trial">
+
+            Seu teste grátis vai até
+            <strong>
+                {{ assinatura.trial_ate.strftime("%d/%m/%Y") }}
+            </strong>
+
+        </div>
+
+        <div class="assinatura-actions">
+
+            <a href="{{ url_for('assinatura.assinar_agora') }}" class="btn-assinar" style="text-decoration:none;display:inline-flex;align-items:center;">
+                Assinar Agora
+            </a>
+
+            <button class="btn-sec">
+                Alterar Plano
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
