@@ -19,6 +19,10 @@ assinatura_bp = Blueprint(
 @login_required
 def minha_assinatura():
 
+    if not current_user.empresa_id:
+        flash("Usuário master não possui assinatura vinculada.", "warning")
+        return redirect(url_for("master.index"))
+
     assinatura = Assinatura.query.filter_by(
         empresa_id=current_user.empresa_id
     ).order_by(
@@ -27,7 +31,7 @@ def minha_assinatura():
 
     if not assinatura:
         flash("Nenhuma assinatura encontrada.", "warning")
-        return redirect(url_for("dashboard.dashboard"))
+        return redirect(url_for("dashboard.home"))
 
     hoje = datetime.utcnow()
     dias_restantes = 0
@@ -49,6 +53,10 @@ def minha_assinatura():
 @login_required
 def assinar_agora():
 
+    if not current_user.empresa_id:
+        flash("Usuário master não possui assinatura vinculada.", "warning")
+        return redirect(url_for("master.index"))
+
     assinatura = Assinatura.query.filter_by(
         empresa_id=current_user.empresa_id
     ).order_by(
@@ -57,7 +65,7 @@ def assinar_agora():
 
     if not assinatura:
         flash("Assinatura não encontrada.", "danger")
-        return redirect(url_for("assinatura.minha_assinatura"))
+        return redirect(url_for("dashboard.home"))
 
     try:
         asaas = AsaasService()
@@ -83,7 +91,8 @@ def assinar_agora():
         cobranca = asaas.criar_cobranca(
             customer_id=customer_id,
             valor=assinatura.valor,
-            descricao=f"Assinatura MaVa CRM - Plano {assinatura.plano.upper()}"
+            descricao=f"Assinatura MaVa CRM - Plano {assinatura.plano.upper()}",
+            dias_para_vencer=1
         )
 
         payment_id = cobranca.get("id")
