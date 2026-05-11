@@ -7,9 +7,57 @@
     .master-hero {
         background: linear-gradient(135deg, #020617, #0f172a, #052e16);
         border: 1px solid #1e293b;
-        border-radius: 20px;
+        border-radius: 24px;
         padding: 28px;
         margin-bottom: 22px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+
+    .master-hero h1 {
+        margin: 0;
+        font-size: 30px;
+    }
+
+    .master-hero p {
+        color: #94a3b8;
+        margin: 8px 0 0;
+    }
+
+    .top-actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .saas-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .saas-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .saas-label {
+        color: #94a3b8;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .saas-value {
+        color: #f8fafc;
+        font-size: 28px;
+        font-weight: 800;
+    }
+
+    .saas-money {
+        color: #22c55e;
     }
 
     .empresa-grid {
@@ -21,11 +69,13 @@
     .empresa-card {
         background: #111827;
         border: 1px solid #1e293b;
-        border-radius: 18px;
+        border-radius: 20px;
         padding: 22px;
         text-decoration: none;
         color: inherit;
         transition: .2s;
+        position: relative;
+        overflow: hidden;
     }
 
     .empresa-card:hover {
@@ -53,33 +103,113 @@
         border-radius: 999px;
         font-size: 12px;
         font-weight: bold;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
+    }
+
+    .pill-trial {
+        background: rgba(59,130,246,.15);
+        color: #60a5fa;
+    }
+
+    .pill-pendente {
+        background: rgba(245,158,11,.15);
+        color: #fbbf24;
+    }
+
+    .pill-bloqueado {
+        background: rgba(239,68,68,.15);
+        color: #f87171;
     }
 
     .empresa-info {
         color: #cbd5e1;
         font-size: 14px;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
-    .top-actions {
-        margin-top: 18px;
+    .empty-state {
+        background: #0f172a;
+        border: 1px dashed #334155;
+        border-radius: 20px;
+        padding: 28px;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+        .saas-grid,
+        .empresa-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 700px) {
+        .saas-grid,
+        .empresa-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
 <div class="master-hero">
-    <h1 style="margin:0;">Painel Master MaVa CRM</h1>
-    <p style="color:#94a3b8; margin:8px 0 0;">
-        Gerencie todas as empresas que usam seu MaVa CRM.
-    </p>
+    <h1>Painel Master MaVa CRM</h1>
+    <p>Visão geral do SaaS, assinaturas, trials, empresas, usuários e receita estimada.</p>
 
     <div class="top-actions">
         <a class="btn" href="{{ url_for('master.nova_empresa') }}">
             + Criar nova empresa
         </a>
+        <a class="btn" href="{{ url_for('contratacao.contratar') }}">
+            Ver página de contratação
+        </a>
     </div>
 </div>
 
+<div class="saas-grid">
+    <div class="saas-card">
+        <div class="saas-label">Empresas cadastradas</div>
+        <div class="saas-value">{{ resumo_saas.total_empresas }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Usuários cadastrados</div>
+        <div class="saas-value">{{ resumo_saas.total_usuarios }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Assinaturas pagas/ativas</div>
+        <div class="saas-value">{{ resumo_saas.assinaturas_pagas }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Receita mensal estimada</div>
+        <div class="saas-value saas-money">
+            R$ {{ "%.2f"|format(resumo_saas.receita_mensal_estimada or 0) }}
+        </div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Trials ativos</div>
+        <div class="saas-value">{{ resumo_saas.trials_ativos }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Trials vencidos</div>
+        <div class="saas-value">{{ resumo_saas.trials_vencidos }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Aguardando pagamento</div>
+        <div class="saas-value">{{ resumo_saas.assinaturas_aguardando }}</div>
+    </div>
+
+    <div class="saas-card">
+        <div class="saas-label">Bloqueados</div>
+        <div class="saas-value">{{ resumo_saas.assinaturas_bloqueadas }}</div>
+    </div>
+</div>
+
+{% if cards %}
 <div class="empresa-grid">
     {% for item in cards %}
         <a class="empresa-card" href="{{ url_for('master.entrar_empresa', empresa_id=item.empresa.id) }}">
@@ -89,14 +219,40 @@
                 Plano {{ item.empresa.plano or "basico" }}
             </span>
 
+            {% if item.assinatura %}
+                {% if item.assinatura.status == "ativa" %}
+                    <span class="pill">Ativa</span>
+                {% elif item.assinatura.status == "trial" %}
+                    <span class="pill pill-trial">
+                        Trial
+                        {% if item.dias_trial is not none %}
+                            - {{ item.dias_trial }} dias
+                        {% endif %}
+                    </span>
+                {% elif item.assinatura.bloqueado_em %}
+                    <span class="pill pill-bloqueado">Bloqueada</span>
+                {% else %}
+                    <span class="pill pill-pendente">
+                        {{ item.assinatura.status }}
+                    </span>
+                {% endif %}
+            {% else %}
+                <span class="pill pill-pendente">Sem assinatura</span>
+            {% endif %}
+
             <div class="empresa-money">
-                R$ {{ "%.2f"|format(item.receita) }}
+                R$ {{ "%.2f"|format(item.receita or 0) }}
             </div>
 
             <div class="empresa-info">
                 Usuários: {{ item.total_usuarios }} / {{ item.empresa.limite_usuarios or 0 }}<br>
                 Leads: {{ item.total_leads }}<br>
-                WhatsApp pendentes: {{ item.mensagens_nao_lidas }}
+                WhatsApp pendentes: {{ item.mensagens_nao_lidas }}<br>
+
+                {% if item.assinatura %}
+                    Valor plano: R$ {{ "%.2f"|format(item.assinatura.valor or 0) }}<br>
+                    Cliente: {{ item.assinatura.nome_cliente }}
+                {% endif %}
             </div>
 
             <p style="color:#22c55e; margin-top:15px; font-weight:bold;">
@@ -105,4 +261,9 @@
         </a>
     {% endfor %}
 </div>
+{% else %}
+    <div class="empty-state">
+        Nenhuma empresa cadastrada ainda.
+    </div>
+{% endif %}
 {% endblock %}
