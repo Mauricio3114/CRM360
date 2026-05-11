@@ -46,11 +46,12 @@ class AsaasService:
         self,
         customer_id,
         valor,
-        descricao="Assinatura MaVa CRM"
+        descricao="Assinatura MaVa CRM",
+        dias_para_vencer=1
     ):
         url = f"{self.base_url}/payments"
 
-        vencimento = date.today() + timedelta(days=1)
+        vencimento = date.today() + timedelta(days=dias_para_vencer)
 
         payload = {
             "customer": customer_id,
@@ -72,11 +73,14 @@ class AsaasService:
         self,
         customer_id,
         valor,
-        descricao="Assinatura mensal MaVa CRM"
+        descricao="Assinatura mensal MaVa CRM",
+        dias_para_primeira_cobranca=14
     ):
         url = f"{self.base_url}/subscriptions"
 
-        proximo_vencimento = date.today() + timedelta(days=1)
+        proximo_vencimento = date.today() + timedelta(
+            days=dias_para_primeira_cobranca
+        )
 
         payload = {
             "customer": customer_id,
