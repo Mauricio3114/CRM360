@@ -4,12 +4,9 @@ import string
 from flask import Blueprint, request
 
 from flask_mail import Message
-from werkzeug.security import generate_password_hash
 
 from app import db, mail
 from app.models.assinatura import Assinatura
-from app.models.empresa import Empresa
-from app.models.usuario import Usuario
 
 
 asaas_webhook_bp = Blueprint(
@@ -21,6 +18,7 @@ asaas_webhook_bp = Blueprint(
 
 def gerar_senha_temporaria(tamanho=10):
     caracteres = string.ascii_letters + string.digits
+
     return "".join(
         secrets.choice(caracteres)
         for _ in range(tamanho)
@@ -58,8 +56,9 @@ def webhook_asaas():
 
     if not assinatura and customer_id:
         assinatura = Assinatura.query.filter_by(
-            asaas_customer_id=customer_id,
-            status="aguardando_pagamento"
+            asaas_customer_id=customer_id
+        ).order_by(
+            Assinatura.id.desc()
         ).first()
 
     if not assinatura:
@@ -68,85 +67,52 @@ def webhook_asaas():
             "erro": "Assinatura não encontrada"
         }, 404
 
-    if assinatura.status == "ativa":
-        return {
-            "ok": True,
-            "msg": "Assinatura já ativa"
-        }, 200
+    # =========================================
+    # 🔥 NOVO FLUXO
+    # NÃO CRIA EMPRESA/USUÁRIO NOVAMENTE
+    # =========================================
 
-    empresa = Empresa(
-        nome=assinatura.nome_empresa,
-        status="ativa"
-    )
-
-    db.session.add(empresa)
-    db.session.flush()
-
-    senha_temporaria = gerar_senha_temporaria()
-
-    usuario = Usuario(
-        nome=assinatura.nome_cliente,
-        email=assinatura.email,
-        senha=generate_password_hash(senha_temporaria),
-        tipo="admin",
-        empresa_id=empresa.id
-    )
-
-    db.session.add(usuario)
-    db.session.flush()
-
-    assinatura.empresa_id = empresa.id
-    assinatura.usuario_id = usuario.id
     assinatura.status = "ativa"
+    assinatura.status_trial = "encerrado"
 
     db.session.commit()
 
     try:
 
         msg = Message(
-            subject="Seu acesso ao MaVa CRM",
-            recipients=[usuario.email]
+            subject="Pagamento confirmado - MaVa CRM",
+            recipients=[assinatura.email]
         )
 
         msg.body = f"""
-Olá, {usuario.nome}!
+Olá, {assinatura.nome_cliente}!
 
-Seu acesso ao MaVa CRM foi liberado com sucesso 🚀
+Recebemos o pagamento da sua assinatura do MaVa CRM 🚀
 
-Dados de acesso:
+Seu acesso permanece liberado normalmente.
 
-Link:
-https://mavacrm.com.br/login
+Plano:
+{assinatura.plano.upper()}
 
-E-mail:
-{usuario.email}
-
-Senha temporária:
-{senha_temporaria}
-
-Recomendamos alterar sua senha após o primeiro acesso.
-
-Bem-vindo ao MaVa CRM.
+Obrigado por confiar no MaVa CRM.
 """
 
         mail.send(msg)
 
-        print("EMAIL ENVIADO COM SUCESSO")
+        print("EMAIL DE PAGAMENTO ENVIADO")
 
     except Exception as e:
         print("ERRO AO ENVIAR EMAIL:", e)
 
     print("=" * 60)
-    print("NOVO CLIENTE MaVa CRM ATIVADO")
-    print("Empresa:", empresa.nome)
-    print("Nome:", usuario.nome)
-    print("Email:", usuario.email)
-    print("Senha temporária:", senha_temporaria)
+    print("ASSINATURA ATIVADA")
+    print("Cliente:", assinatura.nome_cliente)
+    print("Empresa:", assinatura.nome_empresa)
+    print("Plano:", assinatura.plano)
     print("=" * 60)
 
     return {
         "ok": True,
-        "empresa_id": empresa.id,
-        "usuario_id": usuario.id,
-        "email": usuario.email
+        "assinatura_id": assinatura.id,
+        "status": assinatura.status
     }, 200

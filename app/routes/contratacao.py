@@ -11,6 +11,7 @@ from app import db, mail
 from app.models.assinatura import Assinatura
 from app.models.empresa import Empresa
 from app.models.usuario import Usuario
+from app.services.asaas_service import AsaasService
 
 
 contratacao_bp = Blueprint("contratacao", __name__, url_prefix="")
@@ -54,9 +55,37 @@ def contratar():
         trial_ate = datetime.utcnow() + timedelta(days=14)
 
         try:
+            asaas_customer_id = None
+            asaas_payment_id = None
+
+            asaas = AsaasService()
+
+            cliente_asaas = asaas.criar_cliente(
+                nome=nome,
+                email=email,
+                telefone=telefone
+            )
+
+            if cliente_asaas and cliente_asaas.get("id"):
+                asaas_customer_id = cliente_asaas.get("id")
+
+                assinatura_asaas = asaas.criar_assinatura_mensal(
+                    customer_id=asaas_customer_id,
+                    valor=valor,
+                    descricao=f"Assinatura MaVa CRM - Plano {plano.upper()}",
+                    dias_para_primeira_cobranca=14
+                )
+
+                if assinatura_asaas:
+                    asaas_payment_id = (
+                        assinatura_asaas.get("id")
+                        or assinatura_asaas.get("payment")
+                    )
+
             empresa = Empresa(
                 nome=empresa_nome,
-                status="ativa"
+                status="ativa",
+                plano=plano
             )
 
             db.session.add(empresa)
@@ -84,6 +113,8 @@ def contratar():
                 telefone=telefone,
                 plano=plano,
                 valor=valor,
+                asaas_customer_id=asaas_customer_id,
+                asaas_payment_id=asaas_payment_id,
                 status="trial",
                 status_trial="ativo",
                 trial_ate=trial_ate,
@@ -110,7 +141,7 @@ Você tem 14 dias gratuitos para testar a plataforma.
 Dados de acesso:
 
 Link:
-https://mavacrm.com.br/login
+https://www.mavacrm.com.br/login
 
 E-mail:
 {email}
@@ -123,6 +154,8 @@ Plano escolhido:
 
 Seu teste grátis vai até:
 {trial_ate.strftime("%d/%m/%Y")}
+
+Após o período gratuito, sua assinatura mensal será cobrada conforme o plano escolhido.
 
 Recomendamos alterar sua senha após o primeiro acesso.
 

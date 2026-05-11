@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
@@ -8,6 +10,7 @@ from app.models.usuario import Usuario
 from app.models.lead import Lead
 from app.models.lancamento_financeiro import LancamentoFinanceiro
 from app.models.mensagem_whatsapp import MensagemWhatsApp
+from app.models.assinatura import Assinatura
 
 master_bp = Blueprint("master", __name__, url_prefix="/master")
 
@@ -22,13 +25,66 @@ def index():
     if not somente_master():
         return redirect(url_for("dashboard.home"))
 
+    agora = datetime.utcnow()
+
     empresas = Empresa.query.order_by(Empresa.nome.asc()).all()
+
+    total_empresas = Empresa.query.count()
+    total_usuarios = Usuario.query.count()
+
+    assinaturas_total = Assinatura.query.count()
+
+    assinaturas_pagas = Assinatura.query.filter(
+        Assinatura.status.in_(["pago", "ativo", "confirmado", "recebido"])
+    ).count()
+
+    assinaturas_aguardando = Assinatura.query.filter(
+        Assinatura.status.in_(["aguardando_pagamento", "pendente"])
+    ).count()
+
+    trials_ativos = Assinatura.query.filter(
+        Assinatura.trial_ate != None,
+        Assinatura.trial_ate >= agora,
+        Assinatura.status_trial == "ativo"
+    ).count()
+
+    trials_vencidos = Assinatura.query.filter(
+        Assinatura.trial_ate != None,
+        Assinatura.trial_ate < agora
+    ).count()
+
+    assinaturas_bloqueadas = Assinatura.query.filter(
+        Assinatura.bloqueado_em != None
+    ).count()
+
+    receita_mensal_estimada = db.session.query(
+        db.func.coalesce(db.func.sum(Assinatura.valor), 0)
+    ).filter(
+        Assinatura.status.in_(["pago", "ativo", "confirmado", "recebido"])
+    ).scalar() or 0
+
+    resumo_saas = {
+        "total_empresas": total_empresas,
+        "total_usuarios": total_usuarios,
+        "assinaturas_total": assinaturas_total,
+        "assinaturas_pagas": assinaturas_pagas,
+        "assinaturas_aguardando": assinaturas_aguardando,
+        "trials_ativos": trials_ativos,
+        "trials_vencidos": trials_vencidos,
+        "assinaturas_bloqueadas": assinaturas_bloqueadas,
+        "receita_mensal_estimada": receita_mensal_estimada,
+    }
 
     cards = []
 
     for empresa in empresas:
-        total_usuarios = Usuario.query.filter_by(empresa_id=empresa.id).count()
-        total_leads = Lead.query.filter_by(empresa_id=empresa.id).count()
+        total_usuarios_empresa = Usuario.query.filter_by(
+            empresa_id=empresa.id
+        ).count()
+
+        total_leads = Lead.query.filter_by(
+            empresa_id=empresa.id
+        ).count()
 
         entradas = LancamentoFinanceiro.query.filter_by(
             empresa_id=empresa.id,
@@ -43,15 +99,38 @@ def index():
             lida=False
         ).count()
 
+        assinatura = Assinatura.query.filter_by(
+            empresa_id=empresa.id
+        ).order_by(
+            Assinatura.criado_em.desc()
+        ).first()
+
+        status_assinatura = "sem_assinatura"
+        dias_trial = None
+
+        if assinatura:
+            status_assinatura = assinatura.status
+
+            if assinatura.trial_ate:
+                diferenca = assinatura.trial_ate - agora
+                dias_trial = max(diferenca.days, 0)
+
         cards.append({
             "empresa": empresa,
-            "total_usuarios": total_usuarios,
+            "total_usuarios": total_usuarios_empresa,
             "total_leads": total_leads,
             "receita": receita,
-            "mensagens_nao_lidas": mensagens_nao_lidas
+            "mensagens_nao_lidas": mensagens_nao_lidas,
+            "assinatura": assinatura,
+            "status_assinatura": status_assinatura,
+            "dias_trial": dias_trial,
         })
 
-    return render_template("master_dashboard.html", cards=cards)
+    return render_template(
+        "master_dashboard.html",
+        cards=cards,
+        resumo_saas=resumo_saas
+    )
 
 
 @master_bp.route("/nova", methods=["GET", "POST"])
