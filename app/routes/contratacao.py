@@ -167,11 +167,22 @@ Bem-vindo ao MaVa CRM.
                 print("ERRO AO ENVIAR EMAIL DE CONTRATAÇÃO:", e)
 
             flash(
-                "Conta criada com sucesso! Enviamos o acesso para seu e-mail.",
+                f"""
+            🎉 Conta criada com sucesso!
+
+            Teste grátis ativado por 14 dias.
+
+            E-mail: {email}
+
+            Senha temporária: {senha_temporaria}
+
+            Acesse:
+            https://www.mavacrm.com.br/login
+            """,
                 "success"
             )
 
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("contratacao.contratar"))
 
         except Exception as e:
             db.session.rollback()

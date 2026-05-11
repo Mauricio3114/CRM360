@@ -14,7 +14,7 @@
         }
 
         body{
-            background:#020817;
+            background:radial-gradient(circle at top right, #052e16, #020817 45%, #020617);
             min-height:100vh;
             display:flex;
             align-items:center;
@@ -24,7 +24,7 @@
 
         .card{
             width:100%;
-            max-width:520px;
+            max-width:540px;
             background:#0f172a;
             border-radius:28px;
             padding:35px;
@@ -79,22 +79,54 @@
         }
 
         .flash-box{
-            margin-bottom:18px;
+            margin-bottom:24px;
         }
 
         .flash-msg{
-            padding:14px 16px;
-            border-radius:14px;
-            margin-bottom:10px;
+            padding:20px;
+            border-radius:20px;
+            margin-bottom:14px;
             color:#fff;
             font-weight:700;
-            font-size:14px;
+            font-size:15px;
+            line-height:1.6;
+            border:1px solid rgba(255,255,255,.10);
         }
 
-        .flash-success{background:#16a34a;}
-        .flash-danger{background:#dc2626;}
-        .flash-warning{background:#f59e0b;}
-        .flash-info{background:#2563eb;}
+        .flash-success{
+            background:linear-gradient(135deg, rgba(34,197,94,.22), rgba(22,163,74,.12));
+            border-color:rgba(34,197,94,.45);
+            color:#dcfce7;
+        }
+
+        .flash-danger{
+            background:rgba(220,38,38,.18);
+            border-color:rgba(248,113,113,.45);
+            color:#fecaca;
+        }
+
+        .flash-warning{
+            background:rgba(245,158,11,.18);
+            border-color:rgba(251,191,36,.45);
+            color:#fde68a;
+        }
+
+        .flash-info{
+            background:rgba(37,99,235,.18);
+            border-color:rgba(96,165,250,.45);
+            color:#bfdbfe;
+        }
+
+        .login-link{
+            display:inline-flex;
+            margin-top:14px;
+            padding:12px 16px;
+            border-radius:14px;
+            background:#22c55e;
+            color:#052e16;
+            font-weight:900;
+            text-decoration:none;
+        }
     </style>
 </head>
 
@@ -105,9 +137,15 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-box">
-                    {% for category, message in messages %}
+                    {% for category, message in messages[-1:] %}
                         <div class="flash-msg flash-{{ category }}">
-                            {{ message }}
+                            <div style="white-space:pre-line;">{{ message }}</div>
+
+                            {% if category == "success" %}
+                                <a class="login-link" href="{{ url_for('auth.login') }}">
+                                    Ir para o login →
+                                </a>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
@@ -122,49 +160,19 @@
 
         <form method="POST">
 
-            <input
-                type="text"
-                name="nome"
-                placeholder="Seu nome"
-                required
-            >
+            <input type="text" name="nome" placeholder="Seu nome" required>
 
-            <input
-                type="text"
-                name="empresa"
-                placeholder="Nome da empresa"
-                required
-            >
+            <input type="text" name="empresa" placeholder="Nome da empresa" required>
 
-            <input
-                type="email"
-                name="email"
-                placeholder="Seu e-mail"
-                required
-            >
+            <input type="email" name="email" placeholder="Seu e-mail" required>
 
-            <input
-                type="text"
-                name="telefone"
-                placeholder="Telefone / WhatsApp"
-            >
+            <input type="text" name="telefone" placeholder="Telefone / WhatsApp">
 
             <select name="plano" required>
-                <option value="">
-                    Escolha um plano
-                </option>
-
-                <option value="basico">
-                    Básico - R$97/mês
-                </option>
-
-                <option value="pro">
-                    Pro - R$197/mês
-                </option>
-
-                <option value="premium">
-                    Premium - R$297/mês
-                </option>
+                <option value="">Escolha um plano</option>
+                <option value="basico">Básico - R$97/mês</option>
+                <option value="pro">Pro - R$197/mês</option>
+                <option value="premium">Premium - R$297/mês</option>
             </select>
 
             <button type="submit">
