@@ -30,8 +30,11 @@ def minha_assinatura():
     ).first()
 
     if not assinatura:
-        flash("Nenhuma assinatura encontrada.", "warning")
-        return redirect(url_for("dashboard.home"))
+        return render_template(
+            "assinatura/minha_assinatura.html",
+            assinatura=None,
+            dias_restantes=0
+        )
 
     hoje = datetime.utcnow()
     dias_restantes = 0
@@ -64,8 +67,11 @@ def assinar_agora():
     ).first()
 
     if not assinatura:
-        flash("Assinatura não encontrada.", "danger")
-        return redirect(url_for("dashboard.home"))
+        return render_template(
+            "assinatura/minha_assinatura.html",
+            assinatura=None,
+            dias_restantes=0
+        )
 
     try:
         asaas = AsaasService()
