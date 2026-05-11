@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Assinar MaVa CRM</title>
 
     <style>
-
         *{
             margin:0;
             padding:0;
@@ -18,28 +16,20 @@
         body{
             background:#020817;
             min-height:100vh;
-
             display:flex;
             align-items:center;
             justify-content:center;
-
             padding:30px;
         }
 
         .card{
             width:100%;
             max-width:520px;
-
             background:#0f172a;
-
             border-radius:28px;
-
             padding:35px;
-
             border:1px solid rgba(255,255,255,.08);
-
-            box-shadow:
-                0 0 45px rgba(0,0,0,.35);
+            box-shadow:0 0 45px rgba(0,0,0,.35);
         }
 
         h1{
@@ -61,41 +51,26 @@
 
         input, select{
             height:58px;
-
             border:none;
             outline:none;
-
             border-radius:18px;
-
             padding:0 18px;
-
             background:#020817;
-
             color:#fff;
-
             border:1px solid rgba(255,255,255,.06);
-
             font-size:15px;
         }
 
         button{
             height:60px;
-
             border:none;
-
             border-radius:18px;
-
             background:linear-gradient(135deg,#22c55e,#16a34a);
-
             color:#fff;
-
             font-size:16px;
             font-weight:800;
-
             cursor:pointer;
-
             margin-top:10px;
-
             transition:.2s;
         }
 
@@ -103,11 +78,41 @@
             transform:translateY(-2px);
         }
 
+        .flash-box{
+            margin-bottom:18px;
+        }
+
+        .flash-msg{
+            padding:14px 16px;
+            border-radius:14px;
+            margin-bottom:10px;
+            color:#fff;
+            font-weight:700;
+            font-size:14px;
+        }
+
+        .flash-success{background:#16a34a;}
+        .flash-danger{background:#dc2626;}
+        .flash-warning{background:#f59e0b;}
+        .flash-info{background:#2563eb;}
     </style>
 </head>
+
 <body>
 
     <div class="card">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-box">
+                    {% for category, message in messages %}
+                        <div class="flash-msg flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
         <h1>Assinar MaVa CRM</h1>
 
@@ -145,7 +150,6 @@
             >
 
             <select name="plano" required>
-
                 <option value="">
                     Escolha um plano
                 </option>
@@ -161,7 +165,6 @@
                 <option value="premium">
                     Premium - R$297/mês
                 </option>
-
             </select>
 
             <button type="submit">
