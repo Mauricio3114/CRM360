@@ -6,7 +6,7 @@ from app.services.whatsapp_qr_service import EvolutionAPIService
 from app.models.lid_mapping import LidMapping
 from app.models.pipeline import Pipeline
 from app.models.lead import Lead
-from app import db
+from app import db, socketio
 
 whatsapp_qr_bp = Blueprint("whatsapp_qr", __name__, url_prefix="/whatsapp-qr")
 
@@ -231,7 +231,26 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
             db.session.commit()
 
     conversa["lead_id"] = lead.id
+    conversa["lead_nome"] = lead.nome
+    conversa["lead_telefone"] = lead.telefone
 
+    conversa["lead_pipeline"] = (
+        lead.pipeline.nome
+        if lead.pipeline
+        else "Sem etapa"
+    )
+
+    conversa["lead_tags"] = (
+        lead.lista_tags
+        if hasattr(lead, "lista_tags")
+        else []
+    )
+
+    conversa["lead_vendedor"] = (
+        lead.usuario.nome
+        if lead.usuario
+        else "Sem vendedor"
+    )
     return lead
 
 
@@ -481,6 +500,20 @@ def enviar_chat(jid):
 
         if resultado["ok"]:
             flash("Mensagem enviada com sucesso.", "success")
+        
+            if resultado["ok"]:
+                socketio.emit(
+                    "nova_mensagem_whatsapp",
+                    {
+                        "jid": jid,
+                        "mensagem": mensagem,
+                        "hora": datetime.now().strftime("%H:%M"),
+                        "from_me": True
+                    },
+                    room=jid
+                )
+
+                flash("Mensagem enviada com sucesso.", "success")
         else:
             erro = resultado.get("erro") or "Erro ao enviar mensagem."
 
@@ -630,3 +663,12 @@ def salvar_lid():
             instance_name=instance_name
         )
     )
+
+@socketio.on("entrar_chat")
+def entrar_chat(data):
+    from flask_socketio import join_room
+
+    jid = data.get("jid")
+
+    if jid:
+        join_room(jid)

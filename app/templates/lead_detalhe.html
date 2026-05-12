@@ -424,6 +424,40 @@
     </p>
 
     {% if lead.telefone %}
+
+    <div
+        style="
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-bottom:18px;
+        "
+    >
+
+        <a
+            href="{{ url_for('whatsapp_qr.conversas') }}"
+            class="action-btn btn-whatsapp"
+        >
+            <span class="action-icon">💬</span>
+            Inbox Geral
+        </a>
+
+        <a
+            href="{{ url_for(
+                'whatsapp_qr.conversas',
+                jid='55' + lead.telefone + '@s.whatsapp.net'
+            ) }}"
+            class="action-btn btn-whatsapp"
+        >
+            <span class="action-icon">📲</span>
+            Abrir Conversa Real
+        </a>
+
+    </div>
+
+    {% endif %}
+
+    {% if lead.telefone %}
         <form method="POST" target="_blank"
               action="{{ url_for('leads.whatsapp_manual', lead_id=lead.id) }}">
 

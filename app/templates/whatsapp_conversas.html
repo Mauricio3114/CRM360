@@ -1028,12 +1028,104 @@
                                 Atendimento via Evolution API
                             </div>
 
+                            {% for conversa in conversas %}
+
+                                {% if conversa.get('remoteJid') == jid_ativo %}
+
+                                    {% if conversa.get('lead_id') %}
+
+                                    <div
+                                        style="
+                                            margin-top:10px;
+                                            display:flex;
+                                            flex-wrap:wrap;
+                                            gap:8px;
+                                        "
+                                    >
+
+                                        <span
+                                            style="
+                                                background:rgba(34,197,94,.15);
+                                                color:#4ade80;
+                                                padding:6px 10px;
+                                                border-radius:999px;
+                                                font-size:11px;
+                                                font-weight:800;
+                                            "
+                                        >
+                                            {{ conversa.get('lead_pipeline') }}
+                                        </span>
+
+                                        <span
+                                            style="
+                                                background:rgba(59,130,246,.15);
+                                                color:#60a5fa;
+                                                padding:6px 10px;
+                                                border-radius:999px;
+                                                font-size:11px;
+                                                font-weight:800;
+                                            "
+                                        >
+                                            👤 {{ conversa.get('lead_vendedor') }}
+                                        </span>
+
+                                        {% for tag in conversa.get('lead_tags', []) %}
+
+                                        <span
+                                            style="
+                                                background:rgba(249,115,22,.15);
+                                                color:#fb923c;
+                                                padding:6px 10px;
+                                                border-radius:999px;
+                                                font-size:11px;
+                                                font-weight:800;
+                                            "
+                                        >
+                                            {{ tag }}
+                                        </span>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            {% endfor %}
+
                             <div class="chat-status">
                                 <span class="chat-status-dot"></span>
                                 Conectado agora
                             </div>
                         </div>
                     </div>
+
+                    {% for conversa in conversas %}
+
+                        {% if conversa.get('remoteJid') == jid_ativo %}
+
+                            {% if conversa.get('lead_id') %}
+
+                            <a
+                                href="{{ url_for(
+                                    'leads.detalhe',
+                                    lead_id=conversa.get('lead_id')
+                                ) }}"
+                                class="btn btn-success rounded-4"
+                                style="
+                                    margin-right:10px;
+                                    font-weight:700;
+                                "
+                            >
+                                Abrir Lead
+                            </a>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% endfor %}
 
                     <div class="chat-actions">
                         <button class="top-btn main-action" type="button" title="Ligar">
@@ -1094,18 +1186,84 @@
                     method="POST"
                     action="{{ url_for('whatsapp_qr.enviar_chat', jid=jid_ativo, instance_name=instance_name) }}"
                 >
+
+                    <button
+                        type="button"
+                        class="chat-action-btn"
+                        id="btnEmoji"
+                    >
+                        😊
+                    </button>
+
+                    <button
+                        type="button"
+                        class="chat-action-btn"
+                        id="btnRespostas"
+                    >
+                        ⚡
+                    </button>
+
+                    <label class="chat-action-btn">
+                        📎
+
+                        <input
+                            type="file"
+                            id="arquivoInput"
+                        >
+                    </label>
+
+                    <button
+                        type="button"
+                        class="chat-action-btn"
+                        id="btnAudio"
+                    >
+                        🎤
+                    </button>
+
                     <input
                         type="text"
+                        id="mensagemInput"
                         name="mensagem"
                         placeholder="Digite uma mensagem..."
                         required
                         autocomplete="off"
                     >
 
-                    <button type="submit">
-                        Enviar
+                    <button
+                        type="submit"
+                        id="btnEnviar"
+                    >
+                        ➤
                     </button>
+
                 </form>
+
+                <div
+                    class="quick-replies"
+                    id="quickReplies"
+                >
+
+                    <button class="quick-btn">
+                        Olá, tudo bem? 😊
+                    </button>
+
+                    <button class="quick-btn">
+                        Já vou verificar pra você.
+                    </button>
+
+                    <button class="quick-btn">
+                        Pode me enviar mais detalhes?
+                    </button>
+
+                    <button class="quick-btn">
+                        Obrigado pelo contato 🙏
+                    </button>
+
+                    <button class="quick-btn">
+                        Vou te passar os valores 💰
+                    </button>
+
+                </div>
 
             {% else %}
 
@@ -1131,12 +1289,72 @@
 
 </div>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
 <script>
 const inputBusca = document.getElementById("buscarConversas");
 
 let jidAtivoAtual = "{{ jid_ativo or '' }}";
 let atualizandoChat = false;
 let mensagensLocais = {};
+
+const socket = io();
+
+if(jidAtivoAtual){
+    socket.emit("entrar_chat", {
+        jid: jidAtivoAtual
+    });
+}
+
+socket.on("connect", function(){
+    console.log("Socket conectado");
+});
+
+socket.on("nova_mensagem_whatsapp", function(data){
+
+    if(!data){
+        return;
+    }
+
+    if(data.jid !== jidAtivoAtual){
+        return;
+    }
+
+    const chatBox = document.getElementById("chatBox");
+
+    if(!chatBox){
+        return;
+    }
+
+    chatBox.innerHTML += `
+        <div class="msg ${data.from_me ? 'me' : 'other'}">
+
+            <div class="msg-content">
+
+                ${data.mensagem}
+
+                <div class="msg-meta">
+
+                    <span class="msg-time">
+                        ${data.hora || ''}
+                    </span>
+
+                    ${
+                        data.from_me
+                        ? `<span class="msg-check">✓✓</span>`
+                        : ''
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    scrollChatFinal();
+
+});
 
 function aplicarFiltroBusca(){
     const inputBusca = document.getElementById("buscarConversas");
