@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar Senha | MaVa CRM</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+
+        *{
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+            font-family:Arial,sans-serif;
+        }
+
+        body{
+            background:
+                radial-gradient(circle at top right, rgba(34,197,94,.12), transparent 25%),
+                #020617;
+
+            min-height:100vh;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            padding:20px;
+        }
+
+        .card{
+            width:100%;
+            max-width:430px;
+
+            background:#0f172a;
+
+            border-radius:26px;
+
+            padding:35px;
+
+            border:1px solid #1e293b;
+
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.45);
+        }
+
+        h1{
+            color:#fff;
+            margin-bottom:10px;
+            font-size:32px;
+        }
+
+        p{
+            color:#94a3b8;
+            margin-bottom:25px;
+            line-height:1.6;
+        }
+
+        input{
+            width:100%;
+            height:56px;
+
+            border:none;
+            outline:none;
+
+            border-radius:14px;
+
+            padding:0 16px;
+
+            background:#020617;
+
+            border:1px solid #334155;
+
+            color:#fff;
+
+            margin-bottom:18px;
+        }
+
+        button{
+            width:100%;
+            height:56px;
+
+            border:none;
+
+            border-radius:14px;
+
+            background:linear-gradient(135deg,#22c55e,#16a34a);
+
+            color:#02130a;
+
+            font-weight:900;
+
+            cursor:pointer;
+
+            font-size:15px;
+        }
+
+        .flash{
+            padding:14px;
+            border-radius:14px;
+            margin-bottom:18px;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        .success{
+            background:rgba(34,197,94,.18);
+            color:#bbf7d0;
+            border:1px solid rgba(34,197,94,.25);
+        }
+
+        .warning{
+            background:rgba(245,158,11,.18);
+            color:#fde68a;
+            border:1px solid rgba(245,158,11,.25);
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>Recuperar Senha</h1>
+
+    <p>
+        Digite seu e-mail para receber uma nova senha temporária.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <div class="flash {{ category }}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+
+        <input
+            type="email"
+            name="email"
+            placeholder="Seu e-mail"
+            required
+        >
+
+        <button type="submit">
+            Recuperar Senha
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

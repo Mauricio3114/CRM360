@@ -115,6 +115,7 @@ def create_app():
     from app.routes.contratacao import contratacao_bp
     from app.routes.asaas_webhook import asaas_webhook_bp
     from app.routes.assinatura import assinatura_bp
+    from app.routes.recuperar_senha import recuperar_senha_bp
 
     with app.app_context():
         db.create_all()
@@ -176,5 +177,6 @@ def create_app():
     app.register_blueprint(contratacao_bp)
     app.register_blueprint(asaas_webhook_bp)
     app.register_blueprint(assinatura_bp)
+    app.register_blueprint(recuperar_senha_bp)
 
     return app
