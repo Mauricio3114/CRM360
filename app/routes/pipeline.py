@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify, flash
 from flask_login import login_required, current_user
 from datetime import datetime
 
@@ -6,7 +6,6 @@ from app import db
 from app.models.pipeline import Pipeline
 from app.models.lead import Lead
 from app.models.usuario import Usuario
-
 from app.models.historico_etapa_lead import HistoricoEtapaLead
 
 pipeline_bp = Blueprint("pipeline", __name__, url_prefix="/pipeline")
@@ -14,6 +13,7 @@ pipeline_bp = Blueprint("pipeline", __name__, url_prefix="/pipeline")
 
 def criar_pipeline_padrao():
     etapas = [
+        ("Entrada WhatsApp", 0),
         ("Novo Lead", 1),
         ("Contato Feito", 2),
         ("Proposta", 3),
@@ -46,14 +46,21 @@ def index():
 
     is_admin = current_user.tipo in ["admin", "master"]
 
+    tag_filtro = request.args.get("tag", "").strip()
+
+    origem_filtro = request.args.get("origem", "").strip()
+
     if is_admin:
+
         vendedor_id = request.args.get("vendedor_id")
 
         if vendedor_id and vendedor_id != "todos":
             vendedor_id = int(vendedor_id)
         else:
             vendedor_id = None
+
     else:
+
         vendedor_id = current_user.id
 
     etapas = Pipeline.query.filter_by(
@@ -65,17 +72,29 @@ def index():
     ).order_by(Usuario.nome.asc()).all()
 
     for etapa in etapas:
+        query = Lead.query.filter_by(
+            empresa_id=current_user.empresa_id,
+            pipeline_id=etapa.id
+        )
+
         if vendedor_id:
-            etapa.leads = Lead.query.filter_by(
-                empresa_id=current_user.empresa_id,
-                pipeline_id=etapa.id,
-                usuario_id=vendedor_id
-            ).order_by(Lead.etapa_atualizada_em.asc()).all()
-        else:
-            etapa.leads = Lead.query.filter_by(
-                empresa_id=current_user.empresa_id,
-                pipeline_id=etapa.id
-            ).order_by(Lead.etapa_atualizada_em.asc()).all()
+            query = query.filter_by(usuario_id=vendedor_id)
+
+        if tag_filtro:
+
+            query = query.filter(
+                Lead.tags.like(f"%{tag_filtro}%")
+            )
+
+        if origem_filtro:
+
+            query = query.filter_by(
+                origem=origem_filtro
+            )
+
+        etapa.leads = query.order_by(
+            Lead.etapa_atualizada_em.desc()
+        ).all()
 
     return render_template(
         "pipeline.html",
@@ -86,9 +105,113 @@ def index():
     )
 
 
+@pipeline_bp.route("/nova-coluna", methods=["POST"])
+@login_required
+def nova_coluna():
+
+    nome = request.form.get("nome")
+
+    if not nome:
+        flash("Informe o nome da coluna.", "warning")
+        return redirect(url_for("pipeline.index"))
+
+    ultima = Pipeline.query.filter_by(
+        empresa_id=current_user.empresa_id
+    ).order_by(Pipeline.ordem.desc()).first()
+
+    ordem = 1
+
+    if ultima:
+        ordem = ultima.ordem + 1
+
+    pipeline = Pipeline(
+        nome=nome,
+        ordem=ordem,
+        empresa_id=current_user.empresa_id
+    )
+
+    db.session.add(pipeline)
+    db.session.commit()
+
+    flash("Nova coluna criada.", "success")
+
+    return redirect(url_for("pipeline.index"))
+
+
+@pipeline_bp.route("/renomear/<int:pipeline_id>", methods=["POST"])
+@login_required
+def renomear_coluna(pipeline_id):
+
+    pipeline = Pipeline.query.filter_by(
+        id=pipeline_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    nome = request.form.get("nome")
+
+    if nome:
+        pipeline.nome = nome
+        db.session.commit()
+
+        flash("Coluna renomeada.", "success")
+
+    return redirect(url_for("pipeline.index"))
+
+
+@pipeline_bp.route("/subir/<int:pipeline_id>")
+@login_required
+def subir_coluna(pipeline_id):
+
+    pipeline = Pipeline.query.filter_by(
+        id=pipeline_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    anterior = Pipeline.query.filter(
+        Pipeline.empresa_id == current_user.empresa_id,
+        Pipeline.ordem < pipeline.ordem
+    ).order_by(Pipeline.ordem.desc()).first()
+
+    if anterior:
+        ordem_atual = pipeline.ordem
+
+        pipeline.ordem = anterior.ordem
+        anterior.ordem = ordem_atual
+
+        db.session.commit()
+
+    return redirect(url_for("pipeline.index"))
+
+
+@pipeline_bp.route("/descer/<int:pipeline_id>")
+@login_required
+def descer_coluna(pipeline_id):
+
+    pipeline = Pipeline.query.filter_by(
+        id=pipeline_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    proxima = Pipeline.query.filter(
+        Pipeline.empresa_id == current_user.empresa_id,
+        Pipeline.ordem > pipeline.ordem
+    ).order_by(Pipeline.ordem.asc()).first()
+
+    if proxima:
+        ordem_atual = pipeline.ordem
+
+        pipeline.ordem = proxima.ordem
+        proxima.ordem = ordem_atual
+
+        db.session.commit()
+
+    return redirect(url_for("pipeline.index"))
+
+
 @pipeline_bp.route("/mover/<int:lead_id>/<int:pipeline_id>")
 @login_required
 def mover(lead_id, pipeline_id):
+
     lead = Lead.query.filter_by(
         id=lead_id,
         empresa_id=current_user.empresa_id
@@ -105,7 +228,6 @@ def mover(lead_id, pipeline_id):
 
     if lead.pipeline_id != etapa.id:
 
-        # 🔴 FINALIZA ETAPA ANTIGA
         historico_aberto = HistoricoEtapaLead.query.filter_by(
             lead_id=lead.id,
             saiu_em=None
@@ -113,11 +235,14 @@ def mover(lead_id, pipeline_id):
 
         if historico_aberto:
             historico_aberto.saiu_em = datetime.utcnow()
+
             historico_aberto.tempo_segundos = int(
-                (historico_aberto.saiu_em - historico_aberto.entrou_em).total_seconds()
+                (
+                    historico_aberto.saiu_em
+                    - historico_aberto.entrou_em
+                ).total_seconds()
             )
 
-        # 🟢 NOVA ETAPA
         novo_historico = HistoricoEtapaLead(
             lead_id=lead.id,
             pipeline_id=etapa.id,
@@ -138,6 +263,7 @@ def mover(lead_id, pipeline_id):
 @pipeline_bp.route("/mover-ajax", methods=["POST"])
 @login_required
 def mover_ajax():
+
     dados = request.get_json()
 
     lead_id = dados.get("lead_id")
@@ -151,10 +277,6 @@ def mover_ajax():
     if not lead:
         return jsonify({"sucesso": False})
 
-    if current_user.tipo not in ["admin", "master"]:
-        if lead.usuario_id != current_user.id:
-            return jsonify({"sucesso": False})
-
     etapa = Pipeline.query.filter_by(
         id=pipeline_id,
         empresa_id=current_user.empresa_id
@@ -165,7 +287,6 @@ def mover_ajax():
 
     if lead.pipeline_id != etapa.id:
 
-        # 🔴 FINALIZA ETAPA ANTIGA
         historico_aberto = HistoricoEtapaLead.query.filter_by(
             lead_id=lead.id,
             saiu_em=None
@@ -173,11 +294,14 @@ def mover_ajax():
 
         if historico_aberto:
             historico_aberto.saiu_em = datetime.utcnow()
+
             historico_aberto.tempo_segundos = int(
-                (historico_aberto.saiu_em - historico_aberto.entrou_em).total_seconds()
+                (
+                    historico_aberto.saiu_em
+                    - historico_aberto.entrou_em
+                ).total_seconds()
             )
 
-        # 🟢 NOVA ETAPA
         novo_historico = HistoricoEtapaLead(
             lead_id=lead.id,
             pipeline_id=etapa.id,

@@ -18,27 +18,75 @@ class Lead(db.Model):
     instagram_id = db.Column(db.String(200))
 
     valor = db.Column(db.Float, default=0.0)
+
     plano = db.Column(db.String(100))
-    status = db.Column(db.String(30), default="aberto")
 
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(
+        db.String(30),
+        default="aberto"
+    )
 
-    # 🔥 quando entrou/mudou para a etapa atual
-    etapa_atualizada_em = db.Column(db.DateTime, default=datetime.utcnow)
+    # 🔥 NOVO
+    tags = db.Column(
+        db.String(500),
+        default=""
+    )
+
+    criado_em = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    etapa_atualizada_em = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
 
     origem = db.Column(db.String(100))
-    produto_interesse = db.Column(db.String(150))
 
-    pipeline_id = db.Column(db.Integer, db.ForeignKey("pipelines.id"))
-    empresa_id = db.Column(db.Integer, db.ForeignKey("empresas.id"))
+    produto_interesse = db.Column(
+        db.String(150)
+    )
 
-    usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"))
+    pipeline_id = db.Column(
+        db.Integer,
+        db.ForeignKey("pipelines.id")
+    )
 
-    usuario = db.relationship("Usuario", backref="leads")
+    empresa_id = db.Column(
+        db.Integer,
+        db.ForeignKey("empresas.id")
+    )
+
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id")
+    )
+
+    usuario = db.relationship(
+        "Usuario",
+        backref="leads"
+    )
+
+    @property
+    def lista_tags(self):
+
+        if not self.tags:
+            return []
+
+        return [
+            tag.strip()
+            for tag in self.tags.split(",")
+            if tag.strip()
+        ]
 
     @property
     def tempo_na_etapa_texto(self):
-        inicio = self.etapa_atualizada_em or self.criado_em
+
+        inicio = (
+            self.etapa_atualizada_em
+            or self.criado_em
+        )
 
         if not inicio:
             return "Sem registro"
@@ -46,13 +94,23 @@ class Lead(db.Model):
         agora = datetime.now()
 
         if inicio.tzinfo is not None:
-            inicio = inicio.replace(tzinfo=None)
+            inicio = inicio.replace(
+                tzinfo=None
+            )
 
         diferenca = agora - inicio
 
         dias = diferenca.days
-        horas = diferenca.seconds // 3600
-        minutos = (diferenca.seconds % 3600) // 60
+
+        horas = (
+            diferenca.seconds // 3600
+        )
+
+        minutos = (
+            (
+                diferenca.seconds % 3600
+            ) // 60
+        )
 
         if dias >= 30:
             return "30+ dias nesta etapa"

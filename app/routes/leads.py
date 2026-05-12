@@ -451,3 +451,31 @@ def ligar(lead_id):
         return redirect(url_for("leads.detalhe", lead_id=lead.id))
 
     return redirect(f"tel:{telefone}")
+
+@leads_bp.route("/<int:lead_id>/tags", methods=["POST"])
+@login_required
+def atualizar_tags(lead_id):
+
+    lead = Lead.query.filter_by(
+        id=lead_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    tags = request.form.getlist("tags")
+
+    lead.tags = ",".join(tags)
+
+    db.session.commit()
+
+    registrar_historico_whatsapp(
+        lead,
+        "Tags atualizadas",
+        f"Tags definidas: {lead.tags}"
+    )
+
+    return redirect(
+        url_for(
+            "leads.detalhe",
+            lead_id=lead.id
+        )
+    )

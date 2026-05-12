@@ -1,6 +1,11 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask_login import login_required, current_user
+from datetime import datetime
+
 from app.services.whatsapp_qr_service import EvolutionAPIService
 from app.models.lid_mapping import LidMapping
+from app.models.pipeline import Pipeline
+from app.models.lead import Lead
 from app import db
 
 whatsapp_qr_bp = Blueprint("whatsapp_qr", __name__, url_prefix="/whatsapp-qr")
@@ -85,7 +90,153 @@ def resolver_jid_para_envio(jid, instance_name):
     return jid
 
 
+def timestamp_para_datetime(timestamp):
+    try:
+        timestamp = int(timestamp)
+
+        if timestamp > 9999999999:
+            timestamp = timestamp / 1000
+
+        return datetime.fromtimestamp(timestamp)
+    except Exception:
+        return datetime.utcnow()
+
+
+def obter_ou_criar_entrada_whatsapp():
+    etapa = Pipeline.query.filter_by(
+        nome="Entrada WhatsApp",
+        empresa_id=current_user.empresa_id
+    ).first()
+
+    if etapa:
+        return etapa
+
+    etapa = Pipeline(
+        nome="Entrada WhatsApp",
+        ordem=0,
+        empresa_id=current_user.empresa_id
+    )
+
+    db.session.add(etapa)
+    db.session.commit()
+
+    return etapa
+
+
+def extrair_telefone_para_lead(remote_jid, instance_name):
+    if not remote_jid:
+        return None
+
+    if "@g.us" in remote_jid:
+        return None
+
+    if "@lid" in remote_jid:
+        mapping = buscar_mapping_lid(remote_jid, instance_name)
+
+        if mapping:
+            return limpar_numero(mapping.numero_real)
+
+        numero_lid = remote_jid.replace("@lid", "")
+        return numero_lid[:20]
+
+    telefone = (
+        remote_jid.replace("@s.whatsapp.net", "")
+        .replace("@lid", "")
+        .replace("@g.us", "")
+    )
+
+    telefone = limpar_numero(telefone)
+
+    return telefone[:20]
+
+
+def sincronizar_conversa_com_lead(conversa, instance_name):
+    if not current_user.is_authenticated:
+        return None
+
+    if not current_user.empresa_id:
+        return None
+
+    remote_jid = conversa.get("remoteJid")
+
+    if not remote_jid:
+        return None
+
+    if "@g.us" in remote_jid:
+        return None
+
+    telefone = extrair_telefone_para_lead(remote_jid, instance_name)
+
+    if not telefone:
+        return None
+
+    nome = (
+        conversa.get("nome_formatado")
+        or conversa.get("name")
+        or conversa.get("pushName")
+        or conversa.get("notify")
+        or conversa.get("contactName")
+        or conversa.get("profileName")
+        or formatar_jid(remote_jid)
+    )
+
+    timestamp = conversa.get("timestamp") or 0
+    data_ultima = timestamp_para_datetime(timestamp)
+
+    entrada_whatsapp = obter_ou_criar_entrada_whatsapp()
+
+    lead = Lead.query.filter_by(
+        empresa_id=current_user.empresa_id,
+        telefone=telefone,
+        origem="whatsapp"
+    ).first()
+
+    if not lead:
+        lead = Lead(
+            nome=nome or "Contato WhatsApp",
+            telefone=telefone,
+            email=None,
+            origem="whatsapp",
+            produto_interesse="Atendimento WhatsApp",
+            plano=None,
+            valor=0.0,
+            status="aberto",
+            pipeline_id=entrada_whatsapp.id,
+            empresa_id=current_user.empresa_id,
+            usuario_id=None,
+            criado_em=datetime.utcnow(),
+            etapa_atualizada_em=data_ultima or datetime.utcnow()
+        )
+
+        db.session.add(lead)
+        db.session.commit()
+
+    else:
+        mudou = False
+
+        if nome and lead.nome != nome:
+            lead.nome = nome
+            mudou = True
+
+        if not lead.pipeline_id:
+            lead.pipeline_id = entrada_whatsapp.id
+            mudou = True
+
+        if data_ultima:
+            if not lead.etapa_atualizada_em or data_ultima > lead.etapa_atualizada_em:
+                lead.etapa_atualizada_em = data_ultima
+                mudou = True
+
+        if mudou:
+            db.session.commit()
+
+    conversa["lead_id"] = lead.id
+
+    return lead
+
+
 @whatsapp_qr_bp.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     service = EvolutionAPIService()
 
@@ -169,6 +320,7 @@ def index():
 
 
 @whatsapp_qr_bp.route("/conversas")
+@login_required
 def conversas():
     service = EvolutionAPIService()
 
@@ -240,6 +392,8 @@ def conversas():
             conversa["timestamp"] = timestamp
             conversa["unread_count"] = unread_count
 
+            sincronizar_conversa_com_lead(conversa, instance_name)
+
             conversas.append(conversa)
 
         conversas = sorted(
@@ -299,6 +453,7 @@ def conversas():
 
 
 @whatsapp_qr_bp.route("/chat/<path:jid>")
+@login_required
 def abrir_chat(jid):
     instance_name = request.args.get("instance_name") or "mava_novo"
 
@@ -312,6 +467,7 @@ def abrir_chat(jid):
 
 
 @whatsapp_qr_bp.route("/chat/<path:jid>/enviar", methods=["POST"])
+@login_required
 def enviar_chat(jid):
     service = EvolutionAPIService()
 
@@ -349,6 +505,7 @@ def enviar_chat(jid):
 
 
 @whatsapp_qr_bp.route("/chat_ajax/<path:jid>")
+@login_required
 def chat_ajax(jid):
     service = EvolutionAPIService()
 
@@ -409,6 +566,9 @@ def chat_ajax(jid):
                     or conversa.get("profileName")
                     or formatar_jid(jid)
                 )
+
+                sincronizar_conversa_com_lead(conversa, instance_name)
+
                 break
 
     return render_template(
@@ -421,6 +581,7 @@ def chat_ajax(jid):
 
 
 @whatsapp_qr_bp.route("/salvar_lid", methods=["POST"])
+@login_required
 def salvar_lid():
     lid_jid = request.form.get("lid_jid")
     numero_real = request.form.get("numero_real")

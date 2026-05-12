@@ -1,226 +1,368 @@
 {% extends "base.html" %}
 
-{% block title %}Pipeline | CRM360{% endblock %}
+{% block title %}Pipeline | MaVa CRM{% endblock %}
 
 {% block content %}
+
 <style>
-    .pipeline-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
+.pipeline-hero{
+    background:linear-gradient(135deg,#020617,#0f172a,#052e16);
+    border:1px solid #1e293b;
+    border-radius:24px;
+    padding:24px;
+    margin-bottom:22px;
+}
+
+.pipeline-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.pipeline-title h2{
+    margin:0;
+    font-size:28px;
+    font-weight:900;
+}
+
+.pipeline-title p{
+    margin-top:6px;
+    color:#94a3b8;
+}
+
+.pipeline-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.btn-pipeline{
+    border:none;
+    background:#22c55e;
+    color:#04130a;
+    font-weight:900;
+    padding:12px 18px;
+    border-radius:16px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.btn-pipeline:hover{
+    transform:translateY(-2px);
+}
+
+.pipeline-toolbar{
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:18px;
+    padding:16px;
+    margin-bottom:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+}
+
+.pipeline-toolbar select,
+.pipeline-filters select{
+    background:#0f172a;
+    border:1px solid #334155;
+    color:#fff;
+    padding:12px 14px;
+    border-radius:14px;
+}
+
+.pipeline-filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+}
+
+.pipeline-grid{
+    display:flex;
+    gap:18px;
+    overflow-x:auto;
+    padding-bottom:12px;
+}
+
+.pipeline-col{
+    min-width:340px;
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:24px;
+    padding:16px;
+    min-height:620px;
+    transition:.2s;
+}
+
+.pipeline-col:hover{
+    transform:translateY(-3px);
+    border-color:#22c55e;
+}
+
+.pipeline-col-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.pipeline-col-title{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.pipeline-col-title h3{
+    margin:0;
+    font-size:18px;
+    font-weight:900;
+    color:#fff;
+}
+
+.pipeline-count{
+    width:32px;
+    height:32px;
+    border-radius:999px;
+    background:#22c55e;
+    color:#04130a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:900;
+}
+
+.pipeline-controls{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.pipeline-icon-btn{
+    width:34px;
+    height:34px;
+    border:none;
+    border-radius:12px;
+    background:#0f172a;
+    color:#cbd5e1;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.pipeline-icon-btn:hover{
+    background:#22c55e;
+    color:#04130a;
+}
+
+.lead-card{
+    background:linear-gradient(145deg,#111827,#0f172a);
+    border:1px solid #1f2937;
+    border-radius:20px;
+    padding:16px;
+    margin-bottom:14px;
+    cursor:default;
+    transition:.25s;
+    position:relative;
+    overflow:hidden;
+}
+
+.lead-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,.04),transparent);
+    opacity:0;
+    transition:.3s;
+    pointer-events:none;
+}
+
+.lead-card:hover::before{
+    opacity:1;
+}
+
+.lead-card > *{
+    position:relative;
+    z-index:2;
+}
+
+.lead-card:hover{
+    border-color:#22c55e;
+    transform:translateY(-4px) scale(1.01);
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+
+.drag-handle{
+    background:#1e293b;
+    color:#cbd5e1;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:11px;
+    font-weight:800;
+    margin-bottom:10px;
+    cursor:grab;
+    display:inline-block;
+    user-select:none;
+}
+
+.drag-handle:active{
+    cursor:grabbing;
+}
+
+.lead-name{
+    font-size:15px;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+.lead-meta{
+    font-size:12px;
+    color:#cbd5e1;
+    margin-bottom:7px;
+}
+
+.origin-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    margin-top:6px;
+}
+
+.tags-area{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:12px;
+}
+
+.tag-badge{
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.3px;
+}
+
+.tag-quente{background:rgba(239,68,68,.18);color:#f87171;}
+.tag-frio{background:rgba(59,130,246,.18);color:#60a5fa;}
+.tag-urgente{background:rgba(234,179,8,.18);color:#facc15;animation:pulseUrgente 1.2s infinite;}
+.tag-orcamento{background:rgba(168,85,247,.18);color:#c084fc;}
+.tag-pago{background:rgba(34,197,94,.18);color:#4ade80;}
+.tag-retorno{background:rgba(249,115,22,.18);color:#fb923c;}
+
+@keyframes pulseUrgente{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.06);}
+    100%{transform:scale(1);}
+}
+
+.badge-whatsapp{background:rgba(34,197,94,.16);color:#22c55e;}
+.badge-instagram{background:rgba(249,115,22,.16);color:#fb923c;}
+.badge-default{background:rgba(148,163,184,.16);color:#cbd5e1;}
+
+.btn-open{
+    display:inline-block;
+    margin-top:12px;
+    background:#22c55e;
+    color:#04130a;
+    text-decoration:none;
+    font-size:12px;
+    font-weight:900;
+    padding:8px 12px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+}
+
+.empty-col{
+    color:#64748b;
+    font-size:13px;
+    margin-top:18px;
+}
+
+.modal-bg{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+.modal-box{
+    width:100%;
+    max-width:420px;
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:24px;
+    padding:24px;
+}
+
+.modal-box h3{
+    margin-top:0;
+    margin-bottom:16px;
+}
+
+.modal-box input{
+    width:100%;
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:14px;
+    padding:14px;
+    color:#fff;
+    margin-bottom:16px;
+}
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+.btn-cancel{
+    border:none;
+    background:#1e293b;
+    color:#fff;
+    padding:12px 16px;
+    border-radius:14px;
+}
+
+@media(max-width:900px){
+    .pipeline-col{
+        min-width:290px;
     }
-
-    .pipeline-badge-top {
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: bold;
-    }
-
-    .badge-novo {
-        background: rgba(59,130,246,.15);
-        color: #3b82f6;
-    }
-
-    .badge-contato {
-        background: rgba(168,85,247,.15);
-        color: #a855f7;
-    }
-
-    .badge-proposta {
-        background: rgba(249,115,22,.15);
-        color: #fb923c;
-    }
-
-    .badge-negociacao {
-        background: rgba(34,197,94,.15);
-        color: #22c55e;
-    }
-
-    .badge-fechado {
-        background: rgba(16,185,129,.2);
-        color: #10b981;
-    }
-
-    .badge-perdido {
-        background: rgba(239,68,68,.15);
-        color: #ef4444;
-    }
-
-    .pipeline-hero {
-        background: linear-gradient(135deg, #020617, #0f172a, #052e16);
-        border: 1px solid #1e293b;
-        border-radius: 18px;
-        padding: 24px;
-        margin-bottom: 20px;
-    }
-
-    .pipeline-toolbar {
-        background: #020617;
-        border: 1px solid #1e293b;
-        border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 18px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .pipeline-toolbar select {
-        background: #0f172a;
-        color: #fff;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 10px 12px;
-    }
-
-    .pipeline-grid {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 14px;
-    }
-
-    .pipeline-col {
-        background: #020617;
-        border: 1px solid #1e293b;
-        border-radius: 16px;
-        padding: 14px;
-        min-height: 430px;
-        transition: .25s;
-    }
-
-    .pipeline-col:hover {
-        border-color: #22c55e;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,.3);
-    }
-
-    .lead-card {
-        background: #111827;
-        border: 1px solid #1f2937;
-        border-radius: 14px;
-        padding: 12px;
-        margin-bottom: 12px;
-        cursor: grab;
-        transition: .2s;
-    }
-
-    .lead-card:hover {
-        transform: translateY(-2px);
-        border-color: #22c55e;
-    }
-
-    .lead-card:active {
-        transform: scale(1.05);
-        opacity: 0.8;
-    }
-
-    .lead-name {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 7px;
-    }
-
-    .lead-info {
-        font-size: 12px;
-        color: #93c5fd;
-        margin-bottom: 5px;
-    }
-
-    .lead-meta {
-        font-size: 12px;
-        color: #cbd5e1;
-        margin-bottom: 8px;
-    }
-
-    .origin-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
-
-    .badge-whatsapp {
-        background: rgba(34,197,94,.18);
-        color: #22c55e;
-    }
-
-    .badge-instagram {
-        background: rgba(249,115,22,.18);
-        color: #fb923c;
-    }
-
-    .badge-default {
-        background: rgba(148,163,184,.18);
-        color: #cbd5e1;
-    }
-
-    .responsavel-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: bold;
-        background: rgba(56,189,248,.16);
-        color: #38bdf8;
-        margin-bottom: 10px;
-    }
-
-    .btn-mini {
-        display: inline-block;
-        background: #22c55e;
-        color: #001b0b;
-        padding: 7px 10px;
-        border-radius: 10px;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    .empty-col {
-        color: #64748b;
-        font-size: 13px;
-        margin-top: 18px;
-    }
-
-    .col-novo { border-top: 3px solid #3b82f6; }
-    .col-contato { border-top: 3px solid #a855f7; }
-    .col-proposta { border-top: 3px solid #fb923c; }
-    .col-negociacao { border-top: 3px solid #22c55e; box-shadow: 0 0 12px rgba(34,197,94,.25); }
-    .col-fechado { border-top: 3px solid #10b981; }
-    .col-perdido { border-top: 3px solid #ef4444; }
-
-    @media (max-width: 1200px) {
-        .pipeline-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    @media (max-width: 800px) {
-        .pipeline-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .pipeline-toolbar {
-            flex-direction: column;
-            align-items: stretch;
-        }
-    }
+}
 </style>
 
 <div class="pipeline-hero">
-    <h2 style="margin:0 0 8px;">Pipeline Comercial</h2>
-    <p style="color:#94a3b8; margin:0;">Arraste os leads entre as etapas do funil de vendas.</p>
+    <div class="pipeline-top">
+        <div class="pipeline-title">
+            <h2>Pipeline Comercial</h2>
+            <p>Arraste leads pela alça “↕ Arrastar” e clique em Abrir para ver o lead.</p>
+        </div>
+
+        <div class="pipeline-actions">
+            <button class="btn-pipeline" onclick="abrirNovaColuna()">
+                + Nova Coluna
+            </button>
+        </div>
+    </div>
 </div>
 
 <div class="pipeline-toolbar">
     <div>
-        <strong>Pipeline Comercial</strong>
-        <p style="color:#94a3b8; margin:5px 0 0;">
+        <strong>Kanban Comercial</strong>
+        <p style="margin-top:6px;color:#94a3b8;">
             {% if is_admin %}
                 Visualizando por vendedor
             {% else %}
@@ -234,96 +376,104 @@
         <select name="vendedor_id" onchange="this.form.submit()">
             <option value="todos">Todos vendedores</option>
             {% for usuario in usuarios %}
-                <option value="{{ usuario.id }}"
-                {% if vendedor_id|string == usuario.id|string %}selected{% endif %}>
-                    {{ usuario.nome }}
-                </option>
+            <option
+                value="{{ usuario.id }}"
+                {% if vendedor_id|string == usuario.id|string %}selected{% endif %}
+            >
+                {{ usuario.nome }}
+            </option>
             {% endfor %}
         </select>
     </form>
     {% endif %}
 </div>
 
+<form method="GET" class="pipeline-filters">
+    {% if is_admin %}
+    <input type="hidden" name="vendedor_id" value="{{ vendedor_id }}">
+    {% endif %}
+
+    <select name="tag">
+        <option value="">Todas Tags</option>
+        <option value="Quente" {% if tag_filtro == "Quente" %}selected{% endif %}>Quente</option>
+        <option value="Frio" {% if tag_filtro == "Frio" %}selected{% endif %}>Frio</option>
+        <option value="Urgente" {% if tag_filtro == "Urgente" %}selected{% endif %}>Urgente</option>
+        <option value="Orçamento" {% if tag_filtro == "Orçamento" %}selected{% endif %}>Orçamento</option>
+        <option value="Pago" {% if tag_filtro == "Pago" %}selected{% endif %}>Pago</option>
+        <option value="Retorno" {% if tag_filtro == "Retorno" %}selected{% endif %}>Retorno</option>
+    </select>
+
+    <select name="origem">
+        <option value="">Todas Origens</option>
+        <option value="whatsapp" {% if origem_filtro == "whatsapp" %}selected{% endif %}>WhatsApp</option>
+        <option value="instagram" {% if origem_filtro == "instagram" %}selected{% endif %}>Instagram</option>
+    </select>
+
+    <button class="btn-pipeline" type="submit">Filtrar</button>
+
+    <a
+        href="{{ url_for('pipeline.index') }}"
+        class="btn-pipeline"
+        style="text-decoration:none;background:#334155;color:#fff;"
+    >
+        Limpar
+    </a>
+</form>
+
 <div class="pipeline-grid">
-    {% for etapa in etapas %}
-    <div class="pipeline-col
-        {% if etapa.nome == 'Novo Lead' %} col-novo
-        {% elif etapa.nome == 'Contato Feito' %} col-contato
-        {% elif etapa.nome == 'Proposta' %} col-proposta
-        {% elif etapa.nome == 'Negociação' %} col-negociacao
-        {% elif etapa.nome == 'Fechado' %} col-fechado
-        {% elif etapa.nome == 'Perdido' %} col-perdido
-        {% endif %}"
+{% for etapa in etapas %}
+    <div
+        class="pipeline-col"
         data-pipeline-id="{{ etapa.id }}"
         ondragover="permitirSoltar(event)"
-        ondrop="soltarLead(event)">
+        ondrop="soltarLead(event)"
+    >
+        <div class="pipeline-col-top">
+            <div class="pipeline-col-title">
+                <h3>{{ etapa.nome }}</h3>
+                <div class="pipeline-count">{{ etapa.leads|length }}</div>
+            </div>
 
-        <div class="pipeline-header">
-            <h3>{{ etapa.nome }}</h3>
+            <div class="pipeline-controls">
+                <a
+                    href="{{ url_for('pipeline.subir_coluna', pipeline_id=etapa.id) }}"
+                    class="pipeline-icon-btn"
+                    style="text-decoration:none;display:flex;align-items:center;justify-content:center;"
+                >↑</a>
 
-            {% if etapa.nome == "Novo Lead" %}
-                <span class="pipeline-badge-top badge-novo">{{ etapa.leads|length }}</span>
-            {% elif etapa.nome == "Contato Feito" %}
-                <span class="pipeline-badge-top badge-contato">{{ etapa.leads|length }}</span>
-            {% elif etapa.nome == "Proposta" %}
-                <span class="pipeline-badge-top badge-proposta">{{ etapa.leads|length }}</span>
-            {% elif etapa.nome == "Negociação" %}
-                <span class="pipeline-badge-top badge-negociacao">{{ etapa.leads|length }}</span>
-            {% elif etapa.nome == "Fechado" %}
-                <span class="pipeline-badge-top badge-fechado">{{ etapa.leads|length }}</span>
-            {% elif etapa.nome == "Perdido" %}
-                <span class="pipeline-badge-top badge-perdido">{{ etapa.leads|length }}</span>
-            {% else %}
-                <span class="pipeline-badge-top">{{ etapa.leads|length }}</span>
-            {% endif %}
+                <a
+                    href="{{ url_for('pipeline.descer_coluna', pipeline_id=etapa.id) }}"
+                    class="pipeline-icon-btn"
+                    style="text-decoration:none;display:flex;align-items:center;justify-content:center;"
+                >↓</a>
+
+                <button
+                    class="pipeline-icon-btn"
+                    type="button"
+                    onclick="abrirRenomear('{{ etapa.id }}','{{ etapa.nome }}')"
+                >✏️</button>
+            </div>
         </div>
 
         {% if etapa.leads %}
             {% for lead in etapa.leads %}
-            <div class="lead-card"
-                 draggable="true"
-                 ondragstart="arrastarLead(event)"
-                 data-lead-id="{{ lead.id }}">
+            <div class="lead-card" data-lead-id="{{ lead.id }}">
+
+                <div
+                    class="drag-handle"
+                    draggable="true"
+                    ondragstart="arrastarLead(event)"
+                    data-lead-id="{{ lead.id }}"
+                >
+                    ↕ Arrastar
+                </div>
 
                 <div class="lead-name">{{ lead.nome }}</div>
 
-                <div class="lead-info">📞 {{ lead.telefone }}</div>
-
-                <div class="lead-meta">
-                    {{ lead.produto_interesse or "Sem produto" }}
-                </div>
-
-                <div class="lead-meta">
-                    💼 Plano: {{ lead.plano or "-" }}
-                </div>
-
-                <div class="lead-meta">
-                    💰 R$ {{ "%.2f"|format(lead.valor or 0) }}
-                </div>
-
-                <div class="lead-meta">
-                    📊 Status: 
-                    {% if lead.status == "fechado" %}
-                        <span style="color:#22c55e;">Fechado</span>
-                    {% elif lead.status == "perdido" %}
-                        <span style="color:#ef4444;">Perdido</span>
-                    {% else %}
-                        <span style="color:#38bdf8;">Aberto</span>
-                    {% endif %}
-                </div>
-
-                <div class="lead-meta">
-                    🕒 Criado: {{ lead.criado_em.strftime("%d/%m %H:%M") if lead.criado_em }}
-                </div>
-
-                <div class="lead-meta">
-                    ⏱️ {{ lead.tempo_na_etapa_texto }}
-                </div>
-
-                {% if lead.usuario %}
-                    <span class="responsavel-badge">Resp: {{ lead.usuario.nome }}</span>
-                    <br>
-                {% endif %}
+                <div class="lead-meta">📞 {{ lead.telefone }}</div>
+                <div class="lead-meta">💼 {{ lead.produto_interesse or "Sem produto" }}</div>
+                <div class="lead-meta">💰 R$ {{ "%.2f"|format(lead.valor or 0) }}</div>
+                <div class="lead-meta">⏱️ {{ lead.tempo_na_etapa_texto }}</div>
 
                 {% if lead.origem == "whatsapp" %}
                     <span class="origin-badge badge-whatsapp">WhatsApp</span>
@@ -333,9 +483,36 @@
                     <span class="origin-badge badge-default">{{ lead.origem or "Origem" }}</span>
                 {% endif %}
 
-                <br>
+                {% if lead.lista_tags %}
+                <div class="tags-area">
+                    {% for tag in lead.lista_tags %}
+                        {% set classe = "tag-badge" %}
 
-                <a class="btn-mini" href="{{ url_for('leads.detalhe', lead_id=lead.id) }}">
+                        {% if tag == "Quente" %}
+                            {% set classe = classe + " tag-quente" %}
+                        {% elif tag == "Frio" %}
+                            {% set classe = classe + " tag-frio" %}
+                        {% elif tag == "Urgente" %}
+                            {% set classe = classe + " tag-urgente" %}
+                        {% elif tag == "Orçamento" %}
+                            {% set classe = classe + " tag-orcamento" %}
+                        {% elif tag == "Pago" %}
+                            {% set classe = classe + " tag-pago" %}
+                        {% elif tag == "Retorno" %}
+                            {% set classe = classe + " tag-retorno" %}
+                        {% endif %}
+
+                        <span class="{{ classe }}">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <a
+                    href="{{ url_for('leads.detalhe', lead_id=lead.id) }}"
+                    class="btn-open"
+                    draggable="false"
+                    onclick="event.stopPropagation();"
+                >
                     Abrir
                 </a>
             </div>
@@ -344,45 +521,98 @@
             <p class="empty-col">Nenhum lead nesta etapa.</p>
         {% endif %}
     </div>
-    {% endfor %}
+{% endfor %}
+</div>
+
+<div class="modal-bg" id="modalNova">
+    <div class="modal-box">
+        <h3>Nova Coluna</h3>
+
+        <form method="POST" action="{{ url_for('pipeline.nova_coluna') }}">
+            <input type="text" name="nome" placeholder="Nome da coluna" required>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn-pipeline">Criar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-bg" id="modalRenomear">
+    <div class="modal-box">
+        <h3>Renomear Coluna</h3>
+
+        <form method="POST" id="formRenomear">
+            <input type="text" name="nome" id="inputRenomear" required>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn-pipeline">Salvar</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
-    function arrastarLead(event) {
-        event.dataTransfer.setData("lead_id", event.target.dataset.leadId);
+function abrirNovaColuna(){
+    document.getElementById("modalNova").style.display = "flex";
+}
+
+function abrirRenomear(id, nome){
+    document.getElementById("modalRenomear").style.display = "flex";
+    document.getElementById("inputRenomear").value = nome;
+    document.getElementById("formRenomear").action = `/pipeline/renomear/${id}`;
+}
+
+function fecharModal(){
+    document.getElementById("modalNova").style.display = "none";
+    document.getElementById("modalRenomear").style.display = "none";
+}
+
+function arrastarLead(event){
+    const leadId = event.currentTarget.dataset.leadId;
+
+    event.dataTransfer.setData("lead_id", leadId);
+    event.dataTransfer.effectAllowed = "move";
+}
+
+function permitirSoltar(event){
+    event.preventDefault();
+}
+
+function soltarLead(event){
+    event.preventDefault();
+
+    const leadId = event.dataTransfer.getData("lead_id");
+    const pipelineId = event.currentTarget.dataset.pipelineId;
+
+    if(!leadId || !pipelineId){
+        return;
     }
 
-    function permitirSoltar(event) {
-        event.preventDefault();
-    }
-
-    function soltarLead(event) {
-        event.preventDefault();
-
-        const leadId = event.dataTransfer.getData("lead_id");
-        const pipelineId = event.currentTarget.dataset.pipelineId;
-
-        fetch("{{ url_for('pipeline.mover_ajax') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                lead_id: leadId,
-                pipeline_id: pipelineId
-            })
+    fetch("{{ url_for('pipeline.mover_ajax') }}", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            lead_id:leadId,
+            pipeline_id:pipelineId
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.sucesso) {
-                location.reload();
-            } else {
-                alert("Erro ao mover lead.");
-            }
-        })
-        .catch(() => {
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.sucesso){
+            location.reload();
+        }else{
             alert("Erro ao mover lead.");
-        });
-    }
+        }
+    })
+    .catch(() => {
+        alert("Erro ao mover lead.");
+    });
+}
 </script>
+
 {% endblock %}

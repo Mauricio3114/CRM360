@@ -244,6 +244,82 @@
                 <p><strong>Criado em:</strong> {{ lead.criado_em.strftime("%d/%m/%Y %H:%M") if lead.criado_em }}</p>
             </div>
 
+            <div style="margin-bottom:18px;">
+
+                <form
+                    method="POST"
+                    action="{{ url_for('leads.atualizar_tags', lead_id=lead.id) }}"
+                >
+
+                    <label
+                        style="
+                            display:block;
+                            margin-bottom:10px;
+                            font-weight:bold;
+                        "
+                    >
+                        Tags do Lead
+                    </label>
+
+                    <div
+                        style="
+                            display:flex;
+                            flex-wrap:wrap;
+                            gap:10px;
+                            margin-bottom:14px;
+                        "
+                    >
+
+                        {% set tags_atuais = lead.lista_tags %}
+
+                        {% set tags_disponiveis = [
+                            'Quente',
+                            'Frio',
+                            'Urgente',
+                            'Orçamento',
+                            'Pago',
+                            'Retorno'
+                        ] %}
+
+                        {% for tag in tags_disponiveis %}
+
+                        <label
+                            style="
+                                background:#0f172a;
+                                border:1px solid #334155;
+                                padding:8px 12px;
+                                border-radius:999px;
+                                cursor:pointer;
+                                user-select:none;
+                            "
+                        >
+
+                            <input
+                                type="checkbox"
+                                name="tags"
+                                value="{{ tag }}"
+
+                                {% if tag in tags_atuais %}
+                                    checked
+                                {% endif %}
+                            >
+
+                            {{ tag }}
+
+                        </label>
+
+                        {% endfor %}
+
+                    </div>
+
+                    <button class="btn">
+                        Salvar Tags
+                    </button>
+
+                </form>
+
+            </div>
+
             <div class="card">
                 <h3>Registrar atendimento</h3>
 
