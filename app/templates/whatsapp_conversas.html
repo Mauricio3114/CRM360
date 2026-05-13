@@ -1867,6 +1867,20 @@ function ativarUploadPreview(){
             return;
         }
 
+        const formData = new FormData();
+        formData.append("arquivo", file);
+        formData.append("legenda", "");
+
+        fetch(`/whatsapp-qr/chat/${encodeURIComponent(jidAtivoAtual)}/enviar-arquivo?instance_name={{ instance_name }}`, {
+            method:"POST",
+            body:formData,
+            headers:{
+                "X-Requested-With":"XMLHttpRequest"
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+
         const chatBox =
             document.getElementById("chatBox");
 

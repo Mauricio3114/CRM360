@@ -1,3 +1,5 @@
+import os
+from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from datetime import datetime
@@ -535,6 +537,66 @@ def enviar_chat(jid):
             instance_name=instance_name
         )
     )
+
+
+@whatsapp_qr_bp.route("/chat/<path:jid>/enviar-arquivo", methods=["POST"])
+@login_required
+def enviar_arquivo_chat(jid):
+    service = EvolutionAPIService()
+
+    instance_name = request.args.get("instance_name") or "mava_novo"
+    legenda = request.form.get("legenda", "").strip()
+    arquivo = request.files.get("arquivo")
+
+    if not arquivo or arquivo.filename == "":
+        return {"ok": False, "erro": "Nenhum arquivo enviado."}, 400
+
+    pasta_upload = os.path.join(
+        "app",
+        "static",
+        "uploads",
+        "whatsapp"
+    )
+
+    os.makedirs(pasta_upload, exist_ok=True)
+
+    nome_seguro = secure_filename(arquivo.filename)
+
+    caminho_arquivo = os.path.join(
+        pasta_upload,
+        nome_seguro
+    )
+
+    arquivo.save(caminho_arquivo)
+
+    jid_envio = resolver_jid_para_envio(jid, instance_name)
+
+    resultado = service.enviar_arquivo(
+        instance_name,
+        jid_envio,
+        caminho_arquivo,
+        legenda
+    )
+
+    if resultado["ok"]:
+        socketio.emit(
+            "nova_mensagem_whatsapp",
+            {
+                "jid": jid,
+                "mensagem": legenda or nome_seguro,
+                "hora": datetime.now().strftime("%H:%M"),
+                "from_me": True,
+                "tipo": "arquivo"
+            },
+            room=jid
+        )
+
+        return {"ok": True}
+
+    return {
+        "ok": False,
+        "erro": resultado.get("data")
+    }, 400
 
 
 @whatsapp_qr_bp.route("/chat_ajax/<path:jid>")

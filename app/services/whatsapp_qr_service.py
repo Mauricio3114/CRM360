@@ -468,3 +468,55 @@ class EvolutionAPIService:
             "status_code": response.status_code,
             "data": data
         }
+
+    def enviar_arquivo(
+        self,
+        instance_name,
+        remote_jid,
+        arquivo_path,
+        legenda=None
+    ):
+
+        url = f"{self.base_url}/message/sendMedia/{instance_name}"
+
+        numero = remote_jid or ""
+
+        if "@s.whatsapp.net" in numero:
+            numero = numero.replace("@s.whatsapp.net", "")
+
+        with open(arquivo_path, "rb") as arquivo:
+
+            files = {
+                "medias": arquivo
+            }
+
+            data = {
+                "number": numero,
+                "caption": legenda or ""
+            }
+
+            headers = {
+                "apikey": self.api_key
+            }
+
+            response = requests.post(
+                url,
+                headers=headers,
+                files=files,
+                data=data,
+                timeout=120
+            )
+
+        try:
+            retorno = response.json()
+
+        except Exception:
+            retorno = {
+                "retorno": response.text
+            }
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": retorno
+        }
