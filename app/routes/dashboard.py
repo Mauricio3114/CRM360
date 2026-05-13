@@ -112,7 +112,6 @@ def home():
         ).order_by(Tarefa.data_tarefa.asc()).all()
 
     tarefas_pendentes = len([t for t in tarefas_base if t.status == "pendente"])
-   from datetime import datetime
 
     agora = datetime.utcnow()
 
