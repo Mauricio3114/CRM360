@@ -312,6 +312,33 @@
 
                     </div>
 
+                    <div style="margin-top:14px;">
+                        <label
+                            style="
+                                display:block;
+                                margin-bottom:8px;
+                                font-weight:bold;
+                            "
+                        >
+                            Criar nova tag
+                        </label>
+
+                        <input
+                            type="text"
+                            name="nova_tag"
+                            placeholder="Ex: Cliente VIP, Pós-venda, Boleto, Retorno amanhã..."
+                            style="
+                                width:100%;
+                                background:#0f172a;
+                                border:1px solid #334155;
+                                color:#fff;
+                                padding:12px;
+                                border-radius:12px;
+                                margin-bottom:12px;
+                            "
+                        >
+                    </div>
+
                     <button class="btn">
                         Salvar Tags
                     </button>
@@ -491,6 +518,60 @@
 
 <div class="card">
     <h3>Timeline do Lead</h3>
+
+    {% if lead.telefone %}
+
+    <div
+        style="
+            background:#020617;
+            border:1px solid #1e293b;
+            border-radius:18px;
+            padding:16px;
+            margin-bottom:18px;
+        "
+    >
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                flex-wrap:wrap;
+                gap:12px;
+            "
+        >
+
+            <div>
+                <strong style="font-size:15px;">
+                    Conversa integrada
+                </strong>
+
+                <p
+                    style="
+                        margin-top:6px;
+                        color:#94a3b8;
+                        font-size:13px;
+                    "
+                >
+                    Abrir conversa sincronizada do Evolution API.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for(
+                    'whatsapp_qr.conversas',
+                    jid='55' + lead.telefone + '@s.whatsapp.net'
+                ) }}"
+                class="btn"
+            >
+                Abrir Inbox Integrado
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endif %}
 
     <div class="timeline-box">
         {% if interacoes %}

@@ -101,7 +101,9 @@ def index():
         etapas=etapas,
         usuarios=usuarios,
         vendedor_id=vendedor_id if vendedor_id else "todos",
-        is_admin=is_admin
+        is_admin=is_admin,
+        tag_filtro=tag_filtro,
+        origem_filtro=origem_filtro
     )
 
 

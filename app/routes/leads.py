@@ -463,7 +463,20 @@ def atualizar_tags(lead_id):
 
     tags = request.form.getlist("tags")
 
-    lead.tags = ",".join(tags)
+    nova_tag = request.form.get("nova_tag", "").strip()
+
+    if nova_tag:
+        tags.append(nova_tag)
+
+    tags_limpas = []
+
+    for tag in tags:
+        tag = tag.strip()
+
+        if tag and tag not in tags_limpas:
+            tags_limpas.append(tag)
+
+    lead.tags = ",".join(tags_limpas)
 
     db.session.commit()
 
