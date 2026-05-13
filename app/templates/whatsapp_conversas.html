@@ -1447,7 +1447,7 @@ async function carregarChat(jid, rolarFinal=true){
     const loading = document.getElementById("chatLoading");
 
     if(loading){
-        loading.style.display = "block";
+        //loading.style.display = "block";
     }
 
     try{
@@ -1509,7 +1509,7 @@ setInterval(() => {
         return;
     }
 
-    loading.style.display = "block";
+    //loading.style.display = "block";
 
     fetch(window.location.href, {
         headers: {
@@ -1848,7 +1848,7 @@ setInterval(() => {
 
     ultimoTotalMensagens = totalAtual;
 
-}, 2500);
+}, 15000);
 
 function ativarUploadPreview(){
 
