@@ -112,7 +112,18 @@ def home():
         ).order_by(Tarefa.data_tarefa.asc()).all()
 
     tarefas_pendentes = len([t for t in tarefas_base if t.status == "pendente"])
-    tarefas_atrasadas = len([t for t in tarefas_base if t.status == "pendente" and t.data_tarefa < agora])
+   from datetime import datetime
+
+    agora = datetime.utcnow()
+
+    tarefas_atrasadas = len([
+        t for t in tarefas_base
+        if (
+            t.status == "pendente"
+            and t.data_tarefa
+            and t.data_tarefa.replace(tzinfo=None) < agora
+        )
+    ])
     tarefas_hoje = len([t for t in tarefas_base if t.status == "pendente" and t.data_tarefa.date() == agora.date()])
 
     proximas_tarefas = tarefas_base[:8]
