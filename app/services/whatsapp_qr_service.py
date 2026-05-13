@@ -352,6 +352,9 @@ class EvolutionAPIService:
                 reverse=True
             )
 
+            # 🔥 limita somente últimas conversas
+            conversas = conversas[:30]
+
         return {
             "ok": response.status_code in [200, 201],
             "status_code": response.status_code,
