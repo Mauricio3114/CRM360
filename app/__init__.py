@@ -183,4 +183,8 @@ def create_app():
     app.register_blueprint(assinatura_bp)
     app.register_blueprint(recuperar_senha_bp)
 
+    @app.route("/")
+    def home():
+        return redirect(url_for("auth.login"))
+
     return app
