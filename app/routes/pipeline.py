@@ -46,6 +46,8 @@ def index():
 
     is_admin = current_user.tipo in ["admin", "master"]
 
+    busca = request.args.get("busca", "").strip()
+
     tag_filtro = request.args.get("tag", "").strip()
 
     origem_filtro = request.args.get("origem", "").strip()
@@ -80,6 +82,12 @@ def index():
         if vendedor_id:
             query = query.filter_by(usuario_id=vendedor_id)
 
+        if busca:
+
+            query = query.filter(
+                Lead.nome.ilike(f"%{busca}%")
+            )
+
         if tag_filtro:
 
             query = query.filter(
@@ -103,7 +111,8 @@ def index():
         vendedor_id=vendedor_id if vendedor_id else "todos",
         is_admin=is_admin,
         tag_filtro=tag_filtro,
-        origem_filtro=origem_filtro
+        origem_filtro=origem_filtro,
+        busca=busca
     )
 
 
@@ -319,3 +328,41 @@ def mover_ajax():
         db.session.commit()
 
     return jsonify({"sucesso": True})
+
+@pipeline_bp.route("/excluir-coluna/<int:pipeline_id>", methods=["POST"])
+@login_required
+def excluir_coluna(pipeline_id):
+
+    pipeline = Pipeline.query.filter_by(
+        id=pipeline_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    leads = Lead.query.filter_by(
+        pipeline_id=pipeline.id,
+        empresa_id=current_user.empresa_id
+    ).count()
+
+    if leads > 0:
+
+        flash(
+            "Não é possível excluir coluna com leads.",
+            "warning"
+        )
+
+        return redirect(
+            url_for("pipeline.index")
+        )
+
+    db.session.delete(pipeline)
+
+    db.session.commit()
+
+    flash(
+        "Coluna excluída.",
+        "success"
+    )
+
+    return redirect(
+        url_for("pipeline.index")
+    )

@@ -492,3 +492,103 @@ def atualizar_tags(lead_id):
             lead_id=lead.id
         )
     )
+
+@leads_bp.route("/<int:lead_id>/editar", methods=["GET", "POST"])
+@login_required
+def editar(lead_id):
+
+    criar_pipeline_padrao()
+
+    lead = Lead.query.filter_by(
+        id=lead_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    usuarios = Usuario.query.filter_by(
+        empresa_id=current_user.empresa_id
+    ).order_by(Usuario.nome.asc()).all()
+
+    if request.method == "POST":
+
+        lead.nome = request.form.get("nome", "").strip()
+
+        lead.telefone = request.form.get(
+            "telefone",
+            ""
+        ).strip()
+
+        lead.instagram = request.form.get(
+            "instagram",
+            ""
+        ).strip()
+
+        lead.origem = request.form.get(
+            "origem",
+            ""
+        ).strip()
+
+        lead.produto_interesse = request.form.get(
+            "produto",
+            ""
+        ).strip()
+
+        lead.plano = request.form.get(
+            "plano",
+            ""
+        ).strip()
+
+        lead.status = request.form.get(
+            "status",
+            "aberto"
+        ).strip()
+
+        valor = request.form.get("valor") or 0
+
+        try:
+            lead.valor = float(valor)
+        except:
+            lead.valor = 0
+
+        lead.usuario_id = request.form.get(
+            "usuario_id"
+        ) or current_user.id
+
+        db.session.commit()
+
+        return redirect(
+            url_for(
+                "leads.lista"
+            )
+        )
+
+    return render_template(
+        "lead_form.html",
+        lead=lead,
+        usuarios=usuarios
+    )
+
+
+@leads_bp.route("/<int:lead_id>/excluir", methods=["POST"])
+@login_required
+def excluir(lead_id):
+
+    criar_pipeline_padrao()
+
+    lead = Lead.query.filter_by(
+        id=lead_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    Interacao.query.filter_by(
+        lead_id=lead.id
+    ).delete()
+
+    db.session.delete(lead)
+
+    db.session.commit()
+
+    return redirect(
+        url_for(
+            "leads.lista"
+        )
+    )

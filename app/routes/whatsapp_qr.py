@@ -347,6 +347,11 @@ def conversas():
 
     instance_name = request.args.get("instance_name") or "mava_novo"
     jid_ativo = request.args.get("jid")
+    numero_param = request.args.get("numero", "").strip()
+
+    if numero_param:
+        numero_limpo = limpar_numero(numero_param)
+        jid_ativo = f"{numero_limpo}@s.whatsapp.net"
 
     resultado = service.buscar_conversas(instance_name)
 

@@ -95,10 +95,22 @@
         margin-top: 15px;
     }
 
-    .lead-info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
+    .lead-info-grid{
+        display:grid;
+        grid-template-columns: 48% 52%;
+        gap:20px;
+        align-items:start;
+    }
+
+    .left-column{
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+    }
+
+    .right-column{
+        display:flex;
+        flex-direction:column;
     }
 
     .form-control-custom {
@@ -230,145 +242,178 @@
         </div>
 
         <div class="lead-info-grid">
-            <div class="card">
-                <h3>Dados do lead</h3>
 
-                <p><strong>Telefone:</strong> {{ lead.telefone or "Não informado" }}</p>
-                <p><strong>Email:</strong> {{ lead.email or "Não informado" }}</p>
-                <p><strong>Origem:</strong> {{ lead.origem or "Não informado" }}</p>
-                <p><strong>Produto de interesse:</strong> {{ lead.produto_interesse or "Não informado" }}</p>
-                <p><strong>Responsável:</strong> {{ lead.usuario.nome if lead.usuario else "Não definido" }}</p>
-                <p><strong>Plano:</strong> {{ lead.plano or "Não informado" }}</p>
-                <p><strong>Valor:</strong> R$ {{ "%.2f"|format(lead.valor or 0) }}</p>
-                <p><strong>Status:</strong> {{ lead.status }}</p>
-                <p><strong>Criado em:</strong> {{ lead.criado_em.strftime("%d/%m/%Y %H:%M") if lead.criado_em }}</p>
-            </div>
+            <!-- ESQUERDA -->
+            <div class="left-column">
 
-            <div style="margin-bottom:18px;">
+                <div class="card">
+                    <h3>Dados do lead</h3>
 
-                <form
-                    method="POST"
-                    action="{{ url_for('leads.atualizar_tags', lead_id=lead.id) }}"
-                >
+                    <p><strong>Telefone:</strong> {{ lead.telefone or "Não informado" }}</p>
+                    <p><strong>Email:</strong> {{ lead.email or "Não informado" }}</p>
+                    <p><strong>Origem:</strong> {{ lead.origem or "Não informado" }}</p>
+                    <p><strong>Produto de interesse:</strong> {{ lead.produto_interesse or "Não informado" }}</p>
+                    <p><strong>Responsável:</strong> {{ lead.usuario.nome if lead.usuario else "Não definido" }}</p>
+                    <p><strong>Plano:</strong> {{ lead.plano or "Não informado" }}</p>
+                    <p><strong>Valor:</strong> R$ {{ "%.2f"|format(lead.valor or 0) }}</p>
+                    <p><strong>Status:</strong> {{ lead.status }}</p>
+                    <p><strong>Criado em:</strong> {{ lead.criado_em.strftime("%d/%m/%Y %H:%M") if lead.criado_em }}</p>
+                </div>
 
-                    <label
-                        style="
-                            display:block;
-                            margin-bottom:10px;
-                            font-weight:bold;
-                        "
-                    >
-                        Tags do Lead
-                    </label>
+                <div class="card">
 
-                    <div
-                        style="
-                            display:flex;
-                            flex-wrap:wrap;
-                            gap:10px;
-                            margin-bottom:14px;
-                        "
+                    <form
+                        method="POST"
+                        action="{{ url_for('leads.atualizar_tags', lead_id=lead.id) }}"
                     >
 
-                        {% set tags_atuais = lead.lista_tags %}
-
-                        {% set tags_disponiveis = [
-                            'Quente',
-                            'Frio',
-                            'Urgente',
-                            'Orçamento',
-                            'Pago',
-                            'Retorno'
-                        ] %}
-
-                        {% for tag in tags_disponiveis %}
-
-                        <label
-                            style="
-                                background:#0f172a;
-                                border:1px solid #334155;
-                                padding:8px 12px;
-                                border-radius:999px;
-                                cursor:pointer;
-                                user-select:none;
-                            "
-                        >
-
-                            <input
-                                type="checkbox"
-                                name="tags"
-                                value="{{ tag }}"
-
-                                {% if tag in tags_atuais %}
-                                    checked
-                                {% endif %}
-                            >
-
-                            {{ tag }}
-
-                        </label>
-
-                        {% endfor %}
-
-                    </div>
-
-                    <div style="margin-top:14px;">
                         <label
                             style="
                                 display:block;
-                                margin-bottom:8px;
+                                margin-bottom:10px;
                                 font-weight:bold;
                             "
                         >
-                            Criar nova tag
+                            Tags do Lead
                         </label>
 
-                        <input
-                            type="text"
-                            name="nova_tag"
-                            placeholder="Ex: Cliente VIP, Pós-venda, Boleto, Retorno amanhã..."
+                        <div
                             style="
-                                width:100%;
-                                background:#0f172a;
-                                border:1px solid #334155;
-                                color:#fff;
-                                padding:12px;
-                                border-radius:12px;
-                                margin-bottom:12px;
+                                display:flex;
+                                flex-wrap:wrap;
+                                gap:10px;
+                                margin-bottom:14px;
                             "
                         >
+
+                            {% set tags_atuais = lead.lista_tags %}
+
+                            {% set tags_disponiveis = [
+                                'Quente',
+                                'Frio',
+                                'Urgente',
+                                'Orçamento',
+                                'Pago',
+                                'Retorno'
+                            ] %}
+
+                            {% for tag in tags_disponiveis %}
+
+                            <label
+                                style="
+                                    background:#0f172a;
+                                    border:1px solid #334155;
+                                    padding:8px 12px;
+                                    border-radius:999px;
+                                    cursor:pointer;
+                                    user-select:none;
+                                "
+                            >
+
+                                <input
+                                    type="checkbox"
+                                    name="tags"
+                                    value="{{ tag }}"
+
+                                    {% if tag in tags_atuais %}
+                                        checked
+                                    {% endif %}
+                                >
+
+                                {{ tag }}
+
+                            </label>
+
+                            {% endfor %}
+
+                        </div>
+
+                        <div style="margin-top:14px;">
+                            <label
+                                style="
+                                    display:block;
+                                    margin-bottom:8px;
+                                    font-weight:bold;
+                                "
+                            >
+                                Criar nova tag
+                            </label>
+
+                            <input
+                                type="text"
+                                name="nova_tag"
+                                placeholder="Ex: Cliente VIP, Pós-venda..."
+                                style="
+                                    width:100%;
+                                    background:#0f172a;
+                                    border:1px solid #334155;
+                                    color:#fff;
+                                    padding:12px;
+                                    border-radius:12px;
+                                    margin-bottom:12px;
+                                "
+                            >
+                        </div>
+
+                        <button class="btn">
+                            Salvar Tags
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <!-- DIREITA -->
+            <div class="right-column">
+
+                {% if lead.telefone %}
+                <div
+                    style="
+                        background:#020617;
+                        border:1px solid #1e293b;
+                        border-radius:18px;
+                        overflow:hidden;
+                    "
+                >
+
+                    <div
+                        style="
+                            padding:14px 16px;
+                            border-bottom:1px solid #1e293b;
+                        "
+                    >
+                        <strong>💬 WhatsApp do Lead</strong>
+
+                        <p
+                            style="
+                                margin-top:6px;
+                                color:#94a3b8;
+                                font-size:13px;
+                            "
+                        >
+                            Conversa integrada deste cliente
+                        </p>
                     </div>
 
-                    <button class="btn">
-                        Salvar Tags
-                    </button>
+                    <iframe
+                        src="/whatsapp-qr/chat_ajax/{{ lead.telefone }}@s.whatsapp.net?instance_name=mava_novo"
+                        style="
+                            width:100%;
+                            height:980px;
+                            border:none;
+                            background:#020617;
+                            display:block;
+                        "
+                    ></iframe>
 
-                </form>
+                </div>
+                {% endif %}
 
             </div>
 
-            <div class="card">
-                <h3>Registrar atendimento</h3>
-
-                <form method="POST" action="{{ url_for('leads.nova_interacao', lead_id=lead.id) }}">
-                    <label>Tipo</label><br>
-                    <select name="tipo" required class="form-control-custom">
-                        <option value="WhatsApp">WhatsApp</option>
-                        <option value="Ligação">Ligação</option>
-                        <option value="Reunião">Reunião</option>
-                        <option value="Anotação">Anotação</option>
-                        <option value="Proposta enviada">Proposta enviada</option>
-                    </select>
-
-                    <label>Descrição</label><br>
-                    <textarea name="descricao" required rows="5" placeholder="Ex: Cliente pediu proposta para amanhã..."
-                        class="form-control-custom"></textarea>
-
-                    <button class="btn" type="submit">Salvar histórico</button>
-                </form>
-            </div>
         </div>
-    </div>
 
     <div class="card">
         <h3>📊 Histórico de Etapas</h3>
@@ -428,6 +473,49 @@
         {% else %}
             <p style="color:#64748b;">Nenhum histórico ainda.</p>
         {% endif %}
+    </div>
+
+    <div class="card">
+
+        <h3>Registrar atendimento</h3>
+
+        <form
+            method="POST"
+            action="{{ url_for('leads.nova_interacao', lead_id=lead.id) }}"
+        >
+
+            <label>Tipo</label><br>
+
+            <select
+                name="tipo"
+                required
+                class="form-control-custom"
+            >
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Ligação">Ligação</option>
+                <option value="Reunião">Reunião</option>
+                <option value="Anotação">Anotação</option>
+                <option value="Proposta enviada">
+                    Proposta enviada
+                </option>
+            </select>
+
+            <label>Descrição</label><br>
+
+            <textarea
+                name="descricao"
+                required
+                rows="5"
+                placeholder="Ex: Cliente pediu proposta para amanhã..."
+                class="form-control-custom"
+            ></textarea>
+
+            <button class="btn" type="submit">
+                Salvar histórico
+            </button>
+
+        </form>
+
     </div>
 
     <div class="card ia-card">

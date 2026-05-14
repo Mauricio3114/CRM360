@@ -55,16 +55,16 @@ def novo():
         if not nome or not email or not senha:
             return render_template(
                 "usuario_form.html",
+                usuario=None,
                 erro="Preencha nome, e-mail e senha."
             )
 
-        usuario_existente = Usuario.query.filter_by(
-            email=email
-        ).first()
+        usuario_existente = Usuario.query.filter_by(email=email).first()
 
         if usuario_existente:
             return render_template(
                 "usuario_form.html",
+                usuario=None,
                 erro="Este e-mail já está cadastrado. Use outro e-mail."
             )
 
@@ -94,7 +94,89 @@ def novo():
 
         return redirect(url_for("usuarios.lista"))
 
-    return render_template("usuario_form.html")
+    return render_template("usuario_form.html", usuario=None)
+
+
+@usuarios_bp.route("/<int:usuario_id>/editar", methods=["GET", "POST"])
+@login_required
+def editar(usuario_id):
+    if current_user.tipo not in ["admin", "master"]:
+        return redirect(url_for("dashboard.home"))
+
+    usuario = Usuario.query.filter_by(
+        id=usuario_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "").strip()
+        tipo = request.form.get("tipo", "vendedor")
+
+        if not nome or not email:
+            return render_template(
+                "usuario_form.html",
+                usuario=usuario,
+                erro="Preencha nome e e-mail."
+            )
+
+        email_existente = Usuario.query.filter(
+            Usuario.email == email,
+            Usuario.id != usuario.id
+        ).first()
+
+        if email_existente:
+            return render_template(
+                "usuario_form.html",
+                usuario=usuario,
+                erro="Este e-mail já está cadastrado em outro usuário."
+            )
+
+        usuario.nome = nome
+        usuario.email = email
+        usuario.tipo = tipo
+
+        if senha:
+            usuario.senha = generate_password_hash(senha)
+
+        db.session.commit()
+
+        return redirect(url_for("usuarios.lista"))
+
+    return render_template("usuario_form.html", usuario=usuario)
+
+
+@usuarios_bp.route("/<int:usuario_id>/excluir", methods=["POST"])
+@login_required
+def excluir(usuario_id):
+    if current_user.tipo not in ["admin", "master"]:
+        return redirect(url_for("dashboard.home"))
+
+    if usuario_id == current_user.id:
+        usuarios = Usuario.query.filter_by(
+            empresa_id=current_user.empresa_id
+        ).order_by(Usuario.nome.asc()).all()
+
+        empresa = Empresa.query.get(current_user.empresa_id)
+
+        return render_template(
+            "usuarios.html",
+            usuarios=usuarios,
+            total_usuarios=len(usuarios),
+            limite_usuarios=empresa.limite_usuarios or 0 if empresa else 0,
+            erro="Você não pode excluir seu próprio usuário logado."
+        )
+
+    usuario = Usuario.query.filter_by(
+        id=usuario_id,
+        empresa_id=current_user.empresa_id
+    ).first_or_404()
+
+    db.session.delete(usuario)
+    db.session.commit()
+
+    return redirect(url_for("usuarios.lista"))
 
 
 @usuarios_bp.route("/<int:usuario_id>/comissao", methods=["POST"])

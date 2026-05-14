@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Novo Lead | CRM360{% endblock %}
+{% block title %}
+    {% if lead %}
+        Editar Lead
+    {% else %}
+        Novo Lead
+    {% endif %}
+    | CRM360
+{% endblock %}
 
 {% block content %}
 <style>
@@ -50,69 +57,205 @@
         display: flex;
         gap: 10px;
         margin-top: 22px;
+        flex-wrap: wrap;
     }
 </style>
 
 <div class="form-hero">
-    <h2 style="margin:0;">Novo Lead</h2>
-    <p style="color:#94a3b8; margin:8px 0 0;">Cadastre uma nova oportunidade comercial no CRM360.</p>
+
+    <h2 style="margin:0;">
+        {% if lead %}
+            Editar Lead
+        {% else %}
+            Novo Lead
+        {% endif %}
+    </h2>
+
+    <p style="color:#94a3b8; margin:8px 0 0;">
+
+        {% if lead %}
+            Atualize as informações do lead selecionado.
+        {% else %}
+            Cadastre uma nova oportunidade comercial no CRM360.
+        {% endif %}
+
+    </p>
+
 </div>
 
 <div class="form-card">
+
     <form method="POST">
+
         <div class="form-group">
             <label>Nome do lead</label>
-            <input class="form-control" type="text" name="nome" placeholder="Ex: João Silva" required>
+
+            <input
+                class="form-control"
+                type="text"
+                name="nome"
+                placeholder="Ex: João Silva"
+                value="{{ lead.nome if lead else '' }}"
+                required
+            >
         </div>
 
         <div class="form-group">
             <label>Telefone / WhatsApp</label>
-            <input class="form-control" type="text" name="telefone" placeholder="Ex: 85999999999">
+
+            <input
+                class="form-control"
+                type="text"
+                name="telefone"
+                placeholder="Ex: 85999999999"
+                value="{{ lead.telefone if lead else '' }}"
+            >
         </div>
 
         <div class="form-group">
             <label>Instagram</label>
-            <input class="form-control" type="text" name="instagram" placeholder="@cliente ou usuario">
+
+            <input
+                class="form-control"
+                type="text"
+                name="instagram"
+                placeholder="@cliente ou usuario"
+                value="{{ lead.instagram if lead else '' }}"
+            >
         </div>
 
         <div class="form-group">
             <label>Origem do lead</label>
-            <input class="form-control" type="text" name="origem" placeholder="Ex: WhatsApp, Instagram, Indicação">
+
+            <input
+                class="form-control"
+                type="text"
+                name="origem"
+                placeholder="Ex: WhatsApp, Instagram, Indicação"
+                value="{{ lead.origem if lead else '' }}"
+            >
         </div>
 
         <div class="form-group">
             <label>Produto ou serviço de interesse</label>
-            <input class="form-control" type="text" name="produto" placeholder="Ex: CRM360, consultoria, sistema">
+
+            <input
+                class="form-control"
+                type="text"
+                name="produto"
+                placeholder="Ex: CRM360, consultoria, sistema"
+                value="{{ lead.produto_interesse if lead else '' }}"
+            >
         </div>
 
-        <label>Plano</label>
-        <input class="form-control" type="text" name="plano" placeholder="Ex: Mensal, Anual">
+        <div class="form-group">
+            <label>Plano</label>
 
-        <label>Valor</label>
-        <input class="form-control" type="number" step="0.01" name="valor" placeholder="Ex: 1500">
-
-        <label>Status</label>
-        <select class="form-control" name="status">
-            <option value="aberto">Aberto</option>
-            <option value="fechado">Fechado</option>
-            <option value="perdido">Perdido</option>
-        </select>
+            <input
+                class="form-control"
+                type="text"
+                name="plano"
+                placeholder="Ex: Mensal, Anual"
+                value="{{ lead.plano if lead else '' }}"
+            >
+        </div>
 
         <div class="form-group">
-            <label>Responsável pelo lead</label>
-            <select class="form-control" name="usuario_id">
-                {% for usuario in usuarios %}
-                    <option value="{{ usuario.id }}" {% if usuario.id == current_user.id %}selected{% endif %}>
-                        {{ usuario.nome }} - {{ usuario.tipo }}
-                    </option>
-                {% endfor %}
+            <label>Valor</label>
+
+            <input
+                class="form-control"
+                type="number"
+                step="0.01"
+                name="valor"
+                placeholder="Ex: 1500"
+                value="{{ lead.valor if lead else '' }}"
+            >
+        </div>
+
+        <div class="form-group">
+            <label>Status</label>
+
+            <select class="form-control" name="status">
+
+                <option
+                    value="aberto"
+                    {% if lead and lead.status == "aberto" %}
+                        selected
+                    {% endif %}
+                >
+                    Aberto
+                </option>
+
+                <option
+                    value="fechado"
+                    {% if lead and lead.status == "fechado" %}
+                        selected
+                    {% endif %}
+                >
+                    Fechado
+                </option>
+
+                <option
+                    value="perdido"
+                    {% if lead and lead.status == "perdido" %}
+                        selected
+                    {% endif %}
+                >
+                    Perdido
+                </option>
+
             </select>
         </div>
 
-        <div class="form-actions">
-            <button class="btn" type="submit">Salvar lead</button>
-            <a class="btn btn-secondary" href="{{ url_for('leads.lista') }}">Voltar</a>
+        <div class="form-group">
+
+            <label>Responsável pelo lead</label>
+
+            <select class="form-control" name="usuario_id">
+
+                {% for usuario in usuarios %}
+
+                    <option
+                        value="{{ usuario.id }}"
+
+                        {% if lead and lead.usuario_id == usuario.id %}
+                            selected
+                        {% elif not lead and usuario.id == current_user.id %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ usuario.nome }} - {{ usuario.tipo }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
         </div>
+
+        <div class="form-actions">
+
+            <button class="btn" type="submit">
+
+                {% if lead %}
+                    Salvar alterações
+                {% else %}
+                    Salvar lead
+                {% endif %}
+
+            </button>
+
+            <a
+                class="btn btn-secondary"
+                href="{{ url_for('leads.lista') }}"
+            >
+                Voltar
+            </a>
+
+        </div>
+
     </form>
+
 </div>
 {% endblock %}

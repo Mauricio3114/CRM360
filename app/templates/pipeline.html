@@ -90,12 +90,13 @@
 }
 
 .pipeline-col{
-    min-width:340px;
+    min-width:180px;
+    max-width:180px;
     background:#020617;
     border:1px solid #1e293b;
     border-radius:24px;
-    padding:16px;
-    min-height:620px;
+    padding:6px;
+    min-height:500px;
     transition:.2s;
 }
 
@@ -164,7 +165,7 @@
     background:linear-gradient(145deg,#111827,#0f172a);
     border:1px solid #1f2937;
     border-radius:20px;
-    padding:16px;
+    padding:12px;
     margin-bottom:14px;
     cursor:default;
     transition:.25s;
@@ -215,13 +216,13 @@
 }
 
 .lead-name{
-    font-size:15px;
+    font-size:14px;
     font-weight:900;
     margin-bottom:8px;
 }
 
 .lead-meta{
-    font-size:12px;
+    font-size:11px;
     color:#cbd5e1;
     margin-bottom:7px;
 }
@@ -342,6 +343,48 @@
         min-width:290px;
     }
 }
+
+.pipeline-layout{
+    display:grid;
+    grid-template-columns:1fr 420px;
+    gap:18px;
+    align-items:start;
+}
+
+.pipeline-chat-side{
+    background:#020617;
+    border:1px solid #1e293b;
+    border-radius:24px;
+    min-height:760px;
+    position:sticky;
+    top:20px;
+    overflow:hidden;
+}
+
+.pipeline-chat-empty{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:30px;
+    color:#94a3b8;
+}
+
+.pipeline-chat-empty h3{
+    color:#fff;
+    margin-top:16px;
+    margin-bottom:10px;
+}
+
+@media(max-width:1400px){
+
+    .pipeline-layout{
+        grid-template-columns:1fr;
+    }
+
+}
 </style>
 
 <div class="pipeline-hero">
@@ -389,6 +432,22 @@
 </div>
 
 <form method="GET" class="pipeline-filters">
+
+    <input
+        type="text"
+        name="busca"
+        value="{{ busca or '' }}"
+        placeholder="Buscar lead..."
+        style="
+            background:#0f172a;
+            border:1px solid #334155;
+            color:#fff;
+            padding:12px 14px;
+            border-radius:14px;
+            min-width:220px;
+        "
+    >
+
     {% if is_admin %}
     <input type="hidden" name="vendedor_id" value="{{ vendedor_id }}">
     {% endif %}
@@ -420,6 +479,8 @@
     </a>
 </form>
 
+<div class="pipeline-layout">
+
 <div class="pipeline-grid">
 {% for etapa in etapas %}
     <div
@@ -447,6 +508,20 @@
                     style="text-decoration:none;display:flex;align-items:center;justify-content:center;"
                 >↓</a>
 
+                <form
+                    method="POST"
+                    action="{{ url_for('pipeline.excluir_coluna', pipeline_id=etapa.id) }}"
+                    onsubmit="return confirm('Excluir esta coluna?');"
+                >
+                    <button
+                        class="pipeline-icon-btn"
+                        type="submit"
+                        style="background:#7f1d1d;color:#fff;"
+                    >
+                        🗑️
+                    </button>
+                </form>
+
                 <button
                     class="pipeline-icon-btn"
                     type="button"
@@ -457,7 +532,11 @@
 
         {% if etapa.leads %}
             {% for lead in etapa.leads %}
-            <div class="lead-card" data-lead-id="{{ lead.id }}">
+            <div
+                class="lead-card"
+                data-lead-id="{{ lead.id }}"
+                onclick="abrirChatLead('{{ lead.telefone or '' }}')"
+            >
 
                 <div
                     class="drag-handle"
@@ -507,14 +586,27 @@
                 </div>
                 {% endif %}
 
-                <a
-                    href="{{ url_for('leads.detalhe', lead_id=lead.id) }}"
-                    class="btn-open"
-                    draggable="false"
-                    onclick="event.stopPropagation();"
-                >
-                    Abrir
-                </a>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+
+                    <a
+                        href="/whatsapp-qr/conversas?numero={{ lead.telefone }}&instance_name=mava_novo"
+                        class="btn-open"
+                        draggable="false"
+                        onclick="event.stopPropagation();"
+                    >
+                        WhatsApp
+                    </a>
+
+                    <a
+                        href="{{ url_for('leads.detalhe', lead_id=lead.id) }}"
+                        class="btn-open"
+                        draggable="false"
+                        onclick="event.stopPropagation();"
+                    >
+                        Ver Lead
+                    </a>
+
+                </div>
             </div>
             {% endfor %}
         {% else %}
@@ -522,6 +614,23 @@
         {% endif %}
     </div>
 {% endfor %}
+</div>
+
+<div class="pipeline-chat-side" id="pipelineChatSide">
+
+    <div class="pipeline-chat-empty">
+        <div style="font-size:52px;">💬</div>
+
+        <h3>Chat do Lead</h3>
+
+        <p>
+            Clique em um lead para abrir
+            a conversa WhatsApp aqui ao lado.
+        </p>
+    </div>
+
+</div>
+
 </div>
 
 <div class="modal-bg" id="modalNova">
@@ -612,6 +721,37 @@ function soltarLead(event){
     .catch(() => {
         alert("Erro ao mover lead.");
     });
+}
+
+function abrirChatLead(numero){
+
+    const side = document.getElementById("pipelineChatSide");
+
+    if(!numero){
+
+        side.innerHTML = `
+            <div class="pipeline-chat-empty">
+                <div style="font-size:42px;">⚠️</div>
+                <h3>Lead sem telefone</h3>
+            </div>
+        `;
+
+        return;
+    }
+
+    side.innerHTML = `
+        <iframe
+            src="/whatsapp-qr/conversas?numero=${numero}&instance_name=mava_novo"
+            style="
+                width:100%;
+                height:760px;
+                border:none;
+                background:#020617;
+                border-radius:24px;
+                display:block;
+            "
+        ></iframe>
+    `;
 }
 </script>
 

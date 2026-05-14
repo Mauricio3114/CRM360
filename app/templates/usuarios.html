@@ -9,46 +9,56 @@
         justify-content:space-between;
         align-items:center;
         margin-bottom:15px;
+        gap:14px;
+        flex-wrap:wrap;
     }
 
     .user-card {
-        background: #020617;
-        border: 1px solid #1e293b;
-        border-radius: 18px;
-        padding: 22px;
+        background:#020617;
+        border:1px solid #1e293b;
+        border-radius:18px;
+        padding:22px;
     }
 
     .user-grid {
-        display: grid;
-        gap: 12px;
+        display:grid;
+        gap:12px;
     }
 
     .user-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #111827;
-        border: 1px solid #1f2937;
-        border-radius: 12px;
-        padding: 14px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        background:#111827;
+        border:1px solid #1f2937;
+        border-radius:14px;
+        padding:14px;
+        gap:14px;
+        flex-wrap:wrap;
     }
 
     .user-info {
-        font-weight: bold;
+        font-weight:bold;
+    }
+
+    .user-info small {
+        color:#64748b;
     }
 
     .user-actions {
-        display: flex;
-        gap: 8px;
+        display:flex;
+        gap:8px;
+        align-items:center;
+        flex-wrap:wrap;
     }
 
     .input-small {
-        width: 90px;
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid #334155;
-        background: #0f172a;
-        color: #fff;
+        width:90px;
+        padding:8px;
+        border-radius:8px;
+        border:1px solid #334155;
+        background:#0f172a;
+        color:#fff;
     }
 
     .limit-box {
@@ -66,13 +76,38 @@
         border-radius:10px;
         margin-bottom:10px;
     }
+
+    .btn-mini {
+        padding:8px 12px;
+        border-radius:10px;
+        font-size:12px;
+        text-decoration:none;
+        border:none;
+        cursor:pointer;
+        font-weight:800;
+    }
+
+    .btn-edit {
+        background:#2563eb;
+        color:#fff;
+    }
+
+    .btn-delete {
+        background:#dc2626;
+        color:#fff;
+    }
+
+    .btn-save {
+        background:#22c55e;
+        color:#04130a;
+    }
 </style>
 
 <div class="card">
     <div class="top-bar">
         <div>
             <h2>Usuários</h2>
-            <p style="color:#94a3b8;">Gerencie equipe e comissão.</p>
+            <p style="color:#94a3b8;">Gerencie equipe, permissões e comissão.</p>
         </div>
 
         <div class="limit-box">
@@ -106,25 +141,50 @@
             <div class="user-info">
                 {{ usuario.nome }}
                 <br>
-                <small style="color:#64748b;">
-                    {{ usuario.tipo }}
+                <small>
+                    {{ usuario.email }} • {{ usuario.tipo }}
                 </small>
             </div>
 
-            <form method="POST" action="{{ url_for('usuarios.atualizar_comissao', usuario_id=usuario.id) }}">
-                <div class="user-actions">
-                    <input 
-                        type="number" 
-                        step="0.1" 
-                        name="percentual" 
-                        value="{{ usuario.percentual_comissao or 0 }}"
-                        class="input-small"
-                    >
-                    <button class="btn" type="submit">Salvar</button>
-                </div>
-            </form>
+            <div class="user-actions">
+                <form method="POST" action="{{ url_for('usuarios.atualizar_comissao', usuario_id=usuario.id) }}">
+                    <div class="user-actions">
+                        <input
+                            type="number"
+                            step="0.1"
+                            name="percentual"
+                            value="{{ usuario.percentual_comissao or 0 }}"
+                            class="input-small"
+                        >
+                        <button class="btn-mini btn-save" type="submit">
+                            Comissão
+                        </button>
+                    </div>
+                </form>
+
+                <a
+                    class="btn-mini btn-edit"
+                    href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}"
+                >
+                    Editar
+                </a>
+
+                {% if usuario.id != current_user.id %}
+                <form
+                    method="POST"
+                    action="{{ url_for('usuarios.excluir', usuario_id=usuario.id) }}"
+                    onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');"
+                >
+                    <button class="btn-mini btn-delete" type="submit">
+                        Excluir
+                    </button>
+                </form>
+                {% endif %}
+            </div>
 
         </div>
+        {% else %}
+            <p style="color:#64748b;">Nenhum usuário cadastrado.</p>
         {% endfor %}
 
     </div>
