@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
+from werkzeug.security import generate_password_hash
 
 from app import db
 from app.models.usuario import Usuario
@@ -21,7 +22,7 @@ def lista():
     empresa = Empresa.query.get(current_user.empresa_id)
 
     total_usuarios = len(usuarios)
-    limite = empresa.limite_usuarios or 0
+    limite = empresa.limite_usuarios or 0 if empresa else 0
 
     return render_template(
         "usuarios.html",
@@ -31,7 +32,6 @@ def lista():
     )
 
 
-# 🔥 CRIAR NOVO USUÁRIO COM TRAVA DE PLANO
 @usuarios_bp.route("/novo", methods=["GET", "POST"])
 @login_required
 def novo():
@@ -44,32 +44,47 @@ def novo():
         empresa_id=current_user.empresa_id
     ).count()
 
-    limite = empresa.limite_usuarios or 0
-
-    # 🔒 BLOQUEIO DO PLANO
-    if total_usuarios >= limite:
-        usuarios = Usuario.query.filter_by(
-            empresa_id=current_user.empresa_id
-        ).all()
-
-        return render_template(
-            "usuarios.html",
-            usuarios=usuarios,
-            total_usuarios=total_usuarios,
-            limite_usuarios=limite,
-            erro="Seu plano atingiu o limite de usuários. Faça upgrade para adicionar mais."
-        )
+    limite = empresa.limite_usuarios or 0 if empresa else 0
 
     if request.method == "POST":
-        nome = request.form["nome"]
-        email = request.form["email"]
-        senha = request.form["senha"]
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "").strip()
         tipo = request.form.get("tipo", "vendedor")
+
+        if not nome or not email or not senha:
+            return render_template(
+                "usuario_form.html",
+                erro="Preencha nome, e-mail e senha."
+            )
+
+        usuario_existente = Usuario.query.filter_by(
+            email=email
+        ).first()
+
+        if usuario_existente:
+            return render_template(
+                "usuario_form.html",
+                erro="Este e-mail já está cadastrado. Use outro e-mail."
+            )
+
+        if limite and total_usuarios >= limite:
+            usuarios = Usuario.query.filter_by(
+                empresa_id=current_user.empresa_id
+            ).order_by(Usuario.nome.asc()).all()
+
+            return render_template(
+                "usuarios.html",
+                usuarios=usuarios,
+                total_usuarios=total_usuarios,
+                limite_usuarios=limite,
+                erro="Seu plano atingiu o limite de usuários. Faça upgrade para adicionar mais."
+            )
 
         usuario = Usuario(
             nome=nome,
             email=email,
-            senha=senha,
+            senha=generate_password_hash(senha),
             tipo=tipo,
             empresa_id=current_user.empresa_id
         )
