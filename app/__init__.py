@@ -19,6 +19,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = True
+
     db.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)

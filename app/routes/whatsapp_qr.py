@@ -607,77 +607,106 @@ def enviar_arquivo_chat(jid):
 @whatsapp_qr_bp.route("/chat_ajax/<path:jid>")
 @login_required
 def chat_ajax(jid):
-    service = EvolutionAPIService()
 
-    instance_name = (
-        request.args.get("instance_name")
-        or "mava_novo"
-    )
+    try:
+        service = EvolutionAPIService()
 
-    jid_busca = resolver_jid_para_busca(jid, instance_name)
-
-    resultado_chat = service.buscar_mensagens(
-        instance_name,
-        jid_busca
-    )
-
-    mensagens = []
-
-    if resultado_chat["ok"]:
-        mensagens = resultado_chat["data"]
-
-        mensagens_unicas = []
-        ids_vistos = set()
-
-        for msg in mensagens:
-            key = msg.get("key", {})
-            msg_id = key.get("id") or msg.get("id")
-
-            if not msg_id:
-                continue
-
-            if msg_id in ids_vistos:
-                continue
-
-            ids_vistos.add(msg_id)
-            mensagens_unicas.append(msg)
-
-        mensagens = sorted(
-            mensagens_unicas,
-            key=lambda msg: msg.get(
-                "messageTimestamp",
-                0
-            )
+        instance_name = (
+            request.args.get("instance_name")
+            or "mava_novo"
         )
 
-    nome_contato = formatar_jid(jid)
+        jid_busca = resolver_jid_para_busca(jid, instance_name)
 
-    resultado_conversas = service.buscar_conversas(instance_name)
+        resultado_chat = service.buscar_mensagens(
+            instance_name,
+            jid_busca
+        )
 
-    if resultado_conversas["ok"]:
-        for conversa in resultado_conversas["data"]:
-            if conversa.get("remoteJid") == jid:
-                nome_contato = (
-                    conversa.get("nome_formatado")
-                    or conversa.get("name")
-                    or conversa.get("pushName")
-                    or conversa.get("notify")
-                    or conversa.get("contactName")
-                    or conversa.get("profileName")
-                    or formatar_jid(jid)
+        mensagens = []
+
+        if resultado_chat["ok"]:
+            mensagens = resultado_chat["data"]
+
+            mensagens_unicas = []
+            ids_vistos = set()
+
+            for msg in mensagens:
+                key = msg.get("key", {})
+                msg_id = key.get("id") or msg.get("id")
+
+                if not msg_id:
+                    continue
+
+                if msg_id in ids_vistos:
+                    continue
+
+                ids_vistos.add(msg_id)
+                mensagens_unicas.append(msg)
+
+            mensagens = sorted(
+                mensagens_unicas,
+                key=lambda msg: msg.get(
+                    "messageTimestamp",
+                    0
                 )
+            )
 
-                sincronizar_conversa_com_lead(conversa, instance_name)
+        nome_contato = formatar_jid(jid)
 
-                break
+        resultado_conversas = service.buscar_conversas(instance_name)
 
-    return render_template(
-        "partials/chat_content.html",
-        mensagens=mensagens,
-        jid_ativo=jid,
-        nome_contato=nome_contato,
-        instance_name=instance_name
-    )
+        if resultado_conversas["ok"]:
+            for conversa in resultado_conversas["data"]:
+
+                if conversa.get("remoteJid") == jid:
+
+                    nome_contato = (
+                        conversa.get("nome_formatado")
+                        or conversa.get("name")
+                        or conversa.get("pushName")
+                        or conversa.get("notify")
+                        or conversa.get("contactName")
+                        or conversa.get("profileName")
+                        or formatar_jid(jid)
+                    )
+
+                    sincronizar_conversa_com_lead(
+                        conversa,
+                        instance_name
+                    )
+
+                    break
+
+        return render_template(
+            "partials/chat_content.html",
+            mensagens=mensagens,
+            jid_ativo=jid,
+            nome_contato=nome_contato,
+            instance_name=instance_name
+        )
+
+    except Exception as erro:
+
+        print(f"[ERRO CHAT AJAX] {erro}")
+
+        return f"""
+        <div style="
+            padding:30px;
+            color:white;
+            background:#020617;
+            border-radius:18px;
+            font-family:Arial;
+        ">
+            <h3>Erro ao carregar conversa</h3>
+
+            <p>{erro}</p>
+
+            <p style='color:#94a3b8;'>
+                Atualize a página ou reconecte o WhatsApp.
+            </p>
+        </div>
+        """
 
 
 @whatsapp_qr_bp.route("/salvar_lid", methods=["POST"])
