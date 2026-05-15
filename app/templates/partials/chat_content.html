@@ -1,60 +1,191 @@
 <style>
-    body{
-        margin:0;
-        padding:0;
-        background:#020617;
-        color:#fff;
-        font-family:Arial,sans-serif;
-        overflow:hidden;
-    }
+body{
+    margin:0;
+    padding:0;
+    background:#020617;
+    color:#fff;
+    font-family:Arial,sans-serif;
+    overflow:hidden;
+}
 
-    .chat-top{
-        background:#0f172a;
-        padding:14px 18px;
-        border-bottom:1px solid #1e293b;
-    }
+.chat-top{
+    background:#0f172a;
+    padding:14px 18px;
+    border-bottom:1px solid #1e293b;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
 
-    .chat-box{
-        height:520px;
-        overflow-y:auto;
-        padding:16px;
-        background:#020617;
-    }
+.chat-top-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
 
-    .chat-send{
-        position:absolute;
-        bottom:0;
-        left:0;
-        right:0;
+.chat-avatar{
+    width:46px;
+    height:46px;
+    border-radius:999px;
+    background:#22c55e;
+    color:#04130a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size:18px;
+}
 
-    .msg-content{
-        border-radius:14px;
-    }
+.chat-user{
+    font-size:16px;
+    font-weight:900;
+}
 
-    input,
-    textarea{
-        background:#111827 !important;
-        color:#fff !important;
-        border:1px solid #334155 !important;
-    }
+.chat-sub{
+    color:#94a3b8;
+    font-size:12px;
+    margin-top:2px;
+}
 
-    .quick-btn,
-    .top-btn,
-    #btnEnviar,
-    .chat-action-btn{
-        background:#111827;
-        color:#fff;
-        border:1px solid #334155;
-    }
+.chat-status{
+    font-size:11px;
+    color:#22c55e;
+    margin-top:4px;
+}
+
+.chat-status-dot{
+    width:7px;
+    height:7px;
+    background:#22c55e;
+    border-radius:999px;
+    display:inline-block;
+    margin-right:5px;
+}
+
+.chat-actions{
+    display:flex;
+    gap:8px;
+}
+
+.top-btn{
+    width:36px;
+    height:36px;
+    border:none;
+    border-radius:12px;
+    background:#111827;
+    color:#fff;
+    border:1px solid #334155;
+    cursor:pointer;
+}
+
+.chat-box{
+    height:520px;
+    overflow-y:auto;
+    padding:16px;
+    background:#020617;
+}
+
+.msg{
+    display:flex;
+    margin-bottom:12px;
+}
+
+.msg.me{
+    justify-content:flex-end;
+}
+
+.msg.other{
+    justify-content:flex-start;
+}
+
+.msg-content{
+    max-width:78%;
+    padding:12px;
+    border-radius:16px;
+    font-size:14px;
+    line-height:1.4;
+}
+
+.msg.me .msg-content{
+    background:#22c55e;
+    color:#04130a;
+}
+
+.msg.other .msg-content{
+    background:#111827;
+    color:#fff;
+}
+
+.msg-meta{
+    display:flex;
+    justify-content:flex-end;
+    gap:5px;
+    margin-top:8px;
+    font-size:10px;
+    opacity:.8;
+}
+
+.chat-send{
+    position:sticky;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#0f172a;
+    border-top:1px solid #1e293b;
+    padding:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.chat-action-btn,
+#btnEnviar{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:12px;
+    background:#111827;
+    color:#fff;
+    border:1px solid #334155;
+    cursor:pointer;
+}
+
+#mensagemInput{
+    flex:1;
+    height:42px;
+    border-radius:12px;
+    border:1px solid #334155;
+    background:#111827;
+    color:#fff;
+    padding:0 14px;
+    outline:none;
+}
+
+.quick-replies{
+    display:none;
+}
+
+.media-preview{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.media-icon{
+    font-size:22px;
+}
 </style>
 
 <div class="chat-top">
+
     <div class="chat-top-left">
+
         <div class="chat-avatar">
             {{ nome_contato[:1]|upper }}
         </div>
 
-        <div class="chat-user-wrap">
+        <div>
+
             <div class="chat-user">
                 {{ nome_contato }}
             </div>
@@ -67,45 +198,28 @@
                 <span class="chat-status-dot"></span>
                 Conectado agora
             </div>
+
         </div>
+
     </div>
 
     <div class="chat-actions">
-        <button class="top-btn main-action" type="button" title="Ligar">📞</button>
-        <button class="top-btn" type="button" title="Vídeo">🎥</button>
-        <button class="top-btn" type="button" title="Buscar">🔍</button>
-        <button class="top-btn" type="button" title="Mais opções">⋮</button>
+
+        <button class="top-btn" type="button">
+            📞
+        </button>
+
+        <button class="top-btn" type="button">
+            🎥
+        </button>
+
+        <button class="top-btn" type="button">
+            🔍
+        </button>
+
     </div>
+
 </div>
-
-{% if '@lid' in jid_ativo %}
-    <div class="lid-fix-box">
-        <div>
-            <strong>Contato @lid detectado</strong>
-            <small>Informe o número real para enviar mensagens normalmente.</small>
-        </div>
-
-        <form
-            method="POST"
-            action="{{ url_for('whatsapp_qr.salvar_lid') }}"
-            class="lid-fix-form"
-        >
-            <input type="hidden" name="lid_jid" value="{{ jid_ativo }}">
-            <input type="hidden" name="instance_name" value="{{ instance_name }}">
-
-            <input
-                type="text"
-                name="numero_real"
-                placeholder="Ex: 85999999999"
-                required
-            >
-
-            <button type="submit">
-                Corrigir número
-            </button>
-        </form>
-    </div>
-{% endif %}
 
 <div class="chat-box" id="chatBox">
 
@@ -113,8 +227,6 @@
 
         {% set from_me = msg.get('key', {}).get('fromMe') %}
         {% set texto = None %}
-        {% set tipo_midia = None %}
-        {% set nome_arquivo = None %}
 
         {% if msg.get('message') %}
 
@@ -128,95 +240,30 @@
                 {% set texto = message.get('extendedTextMessage').get('text') %}
             {% endif %}
 
-            {% if message.get('imageMessage') %}
-                {% set tipo_midia = 'imagem' %}
-                {% set texto = message.get('imageMessage').get('caption') or 'Imagem recebida/enviada' %}
-            {% endif %}
-
-            {% if message.get('audioMessage') %}
-                {% set tipo_midia = 'audio' %}
-                {% set texto = 'Mensagem de áudio' %}
-            {% endif %}
-
-            {% if message.get('videoMessage') %}
-                {% set tipo_midia = 'video' %}
-                {% set texto = message.get('videoMessage').get('caption') or 'Vídeo recebido/enviado' %}
-            {% endif %}
-
-            {% if message.get('documentMessage') %}
-                {% set tipo_midia = 'documento' %}
-                {% set nome_arquivo = message.get('documentMessage').get('fileName') or 'Documento' %}
-                {% set texto = nome_arquivo %}
-            {% endif %}
-
         {% endif %}
 
         {% if texto %}
 
             <div class="msg {% if from_me %}me{% else %}other{% endif %}">
+
                 <div class="msg-content">
 
-                    {% if tipo_midia == 'imagem' %}
-
-                        <div class="media-preview media-image">
-                            <div class="media-icon">📷</div>
-                            <div>
-                                <strong>Imagem</strong>
-                                <small>{{ texto }}</small>
-                            </div>
-                        </div>
-
-                    {% elif tipo_midia == 'audio' %}
-
-                        <div class="media-preview media-audio">
-                            <div class="media-icon">▶</div>
-                            <div>
-                                <strong>Áudio</strong>
-                                <small>Mensagem de voz recebida/enviada</small>
-                            </div>
-                        </div>
-
-                    {% elif tipo_midia == 'video' %}
-
-                        <div class="media-preview media-video">
-                            <div class="media-icon">🎬</div>
-                            <div>
-                                <strong>Vídeo</strong>
-                                <small>{{ texto }}</small>
-                            </div>
-                        </div>
-
-                    {% elif tipo_midia == 'documento' %}
-
-                        <div class="media-preview media-doc">
-                            <div class="media-icon">📄</div>
-                            <div>
-                                <strong>Documento</strong>
-                                <small>{{ nome_arquivo }}</small>
-                            </div>
-                        </div>
-
-                    {% else %}
-
-                        {{ texto }}
-
-                    {% endif %}
+                    {{ texto }}
 
                     <div class="msg-meta">
 
-                        <span class="msg-time">
+                        <span>
                             {{ msg.get('hora_formatada', '') }}
                         </span>
 
                         {% if from_me %}
-                            <span class="msg-check">
-                                ✓✓
-                            </span>
+                            <span>✓✓</span>
                         {% endif %}
 
                     </div>
 
                 </div>
+
             </div>
 
         {% endif %}
@@ -232,44 +279,9 @@
     action="{{ url_for('whatsapp_qr.enviar_chat', jid=jid_ativo, instance_name=instance_name) }}"
 >
 
-    <button type="button" class="chat-action-btn" title="Emoji">
+    <button type="button" class="chat-action-btn">
         😊
     </button>
-
-    <button
-        type="button"
-        class="chat-action-btn"
-        id="btnRespostas"
-        title="Respostas rápidas"
-    >
-        ⚡
-    </button>
-
-    <label class="chat-action-btn" title="Anexar">
-
-        📎
-
-        <input
-            type="file"
-            id="arquivoInput"
-            name="arquivo"
-            hidden
-        >
-
-    </label>
-
-    <div class="quick-replies" id="quickReplies" style="
-        position:absolute;
-        bottom:55px;
-        left:10px;
-        right:10px;
-        display:flex;
-        flex-wrap:wrap;
-        gap:6px;
-        background:#0f172a;
-        padding:8px;
-        border-top:1px solid #1e293b;
-    ">
 
     <input
         type="text"
@@ -279,15 +291,6 @@
         required
         autocomplete="off"
     >
-
-    <button
-        type="button"
-        class="chat-action-btn"
-        id="btnAudio"
-        title="Áudio"
-    >
-        🎤
-    </button>
 
     <button type="submit" id="btnEnviar">
         ➤
