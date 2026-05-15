@@ -22,9 +22,17 @@ CATEGORIAS_FINANCEIRAS = [
 ]
 
 
+def somente_admin_master():
+    return current_user.tipo in ["admin", "master"]
+
+
 @financeiro_bp.route("/")
 @login_required
 def index():
+
+    if not somente_admin_master():
+        return redirect(url_for("dashboard.home"))
+
     data_inicio = request.args.get("data_inicio")
     data_fim = request.args.get("data_fim")
     categoria = request.args.get("categoria")
@@ -80,6 +88,10 @@ def index():
 @financeiro_bp.route("/novo", methods=["GET", "POST"])
 @login_required
 def novo():
+
+    if not somente_admin_master():
+        return redirect(url_for("dashboard.home"))
+
     leads = Lead.query.filter_by(
         empresa_id=current_user.empresa_id
     ).order_by(Lead.nome.asc()).all()
