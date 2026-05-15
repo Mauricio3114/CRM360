@@ -34,15 +34,19 @@ def nova():
 
         enviar_whatsapp = True if request.form.get("enviar_whatsapp") == "on" else False
 
+        mensagem_whatsapp = request.form.get("mensagem_whatsapp", "").strip()
+
         tarefa = Tarefa(
             titulo=request.form["titulo"],
             descricao=request.form.get("descricao"),
-            tipo=request.form.get("tipo"),
+            tipo=request.form.get("tipo") or "Follow-up",
             data_tarefa=data_tarefa,
+            status="pendente",
             lead_id=lead_id,
             empresa_id=current_user.empresa_id,
+            usuario_id=current_user.id,
             enviar_whatsapp=enviar_whatsapp,
-            mensagem_whatsapp=request.form.get("mensagem_whatsapp")
+            mensagem_whatsapp=mensagem_whatsapp
         )
 
         db.session.add(tarefa)
