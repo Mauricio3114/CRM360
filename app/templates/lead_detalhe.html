@@ -3,6 +3,21 @@
 {% block title %}Detalhe do Lead | CRM360{% endblock %}
 
 {% block content %}
+
+{% set telefone_whatsapp = lead.telefone
+    |replace(' ', '')
+    |replace('(', '')
+    |replace(')', '')
+    |replace('-', '')
+    |replace('+', '')
+%}
+
+{% if telefone_whatsapp and not telefone_whatsapp.startswith('55') %}
+    {% set telefone_whatsapp = '55' + telefone_whatsapp %}
+{% endif %}
+
+{% set jid_whatsapp = telefone_whatsapp + '@s.whatsapp.net' %}
+
     <style>
     .lead-actions {
         display: flex;
@@ -398,7 +413,7 @@
                     </div>
 
                     <iframe
-                        src="/whatsapp-qr/chat_ajax/{{ lead.telefone }}@s.whatsapp.net?instance_name=mava_novo"
+                        src="{{ url_for('whatsapp_qr.chat_ajax', jid=jid_whatsapp) }}?instance_name=mava_novo"
                         style="
                             width:100%;
                             height:980px;

@@ -95,7 +95,7 @@
     background:#020617;
     border:1px solid #1e293b;
     border-radius:24px;
-    padding:6px;
+    padding:8px;
     min-height:500px;
     transition:.2s;
 }
@@ -105,25 +105,64 @@
     border-color:#22c55e;
 }
 
+.pipeline-col.dragging-col{
+    opacity:.45;
+    transform:scale(.98);
+    border-color:#22c55e;
+}
+
+.pipeline-col.drag-over-col{
+    border-color:#38bdf8;
+    box-shadow:0 0 0 2px rgba(56,189,248,.25);
+}
+
 .pipeline-col-top{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:12px;
+    gap:10px;
     margin-bottom:16px;
+    background:#030712;
+    border:1px solid #111827;
+    border-radius:18px;
+    padding:10px;
 }
 
 .pipeline-col-title{
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:7px;
+    flex:1;
+    min-width:0;
 }
 
 .pipeline-col-title h3{
     margin:0;
-    font-size:18px;
+    font-size:17px;
     font-weight:900;
     color:#fff;
+    line-height:1.2;
+    word-break:break-word;
+}
+
+.pipeline-col-drag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    width:max-content;
+    background:#0f172a;
+    color:#94a3b8;
+    border:1px solid #1e293b;
+    padding:5px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:900;
+    cursor:grab;
+    user-select:none;
+}
+
+.pipeline-col-drag:active{
+    cursor:grabbing;
 }
 
 .pipeline-count{
@@ -143,11 +182,12 @@
     display:flex;
     gap:6px;
     flex-wrap:wrap;
+    justify-content:flex-end;
 }
 
 .pipeline-icon-btn{
-    width:34px;
-    height:34px;
+    width:32px;
+    height:32px;
     border:none;
     border-radius:12px;
     background:#0f172a;
@@ -159,6 +199,16 @@
 .pipeline-icon-btn:hover{
     background:#22c55e;
     color:#04130a;
+}
+
+.pipeline-icon-btn.delete{
+    background:rgba(127,29,29,.75);
+    color:#fff;
+}
+
+.pipeline-icon-btn.delete:hover{
+    background:#dc2626;
+    color:#fff;
 }
 
 .lead-card{
@@ -341,49 +391,8 @@
 @media(max-width:900px){
     .pipeline-col{
         min-width:290px;
+        max-width:290px;
     }
-}
-
-.pipeline-layout{
-    display:grid;
-    grid-template-columns:1fr 420px;
-    gap:18px;
-    align-items:start;
-}
-
-.pipeline-chat-side{
-    background:#020617;
-    border:1px solid #1e293b;
-    border-radius:24px;
-    min-height:760px;
-    position:sticky;
-    top:20px;
-    overflow:hidden;
-}
-
-.pipeline-chat-empty{
-    height:100%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    text-align:center;
-    padding:30px;
-    color:#94a3b8;
-}
-
-.pipeline-chat-empty h3{
-    color:#fff;
-    margin-top:16px;
-    margin-bottom:10px;
-}
-
-@media(max-width:1400px){
-
-    .pipeline-layout{
-        grid-template-columns:1fr;
-    }
-
 }
 </style>
 
@@ -391,7 +400,7 @@
     <div class="pipeline-top">
         <div class="pipeline-title">
             <h2>Pipeline Comercial</h2>
-            <p>Arraste leads pela alça “↕ Arrastar” e clique em Abrir para ver o lead.</p>
+            <p>Arraste leads pela alça “↕ Arrastar” e organize as colunas pela alça “☰ Coluna”.</p>
         </div>
 
         <div class="pipeline-actions">
@@ -479,44 +488,42 @@
     </a>
 </form>
 
-<div class="pipeline-layout">
-
-<div class="pipeline-grid">
+<div class="pipeline-grid" id="pipelineGrid">
 {% for etapa in etapas %}
     <div
         class="pipeline-col"
         data-pipeline-id="{{ etapa.id }}"
-        ondragover="permitirSoltar(event)"
+        ondragover="permitirSoltarLead(event)"
         ondrop="soltarLead(event)"
     >
         <div class="pipeline-col-top">
             <div class="pipeline-col-title">
+                <div
+                    class="pipeline-col-drag"
+                    draggable="true"
+                    ondragstart="arrastarColuna(event)"
+                    ondragover="permitirSoltarColuna(event)"
+                    ondrop="soltarColuna(event)"
+                    ondragend="finalizarArrastoColuna(event)"
+                    data-pipeline-id="{{ etapa.id }}"
+                >
+                    ☰ Coluna
+                </div>
+
                 <h3>{{ etapa.nome }}</h3>
                 <div class="pipeline-count">{{ etapa.leads|length }}</div>
             </div>
 
             <div class="pipeline-controls">
-                <a
-                    href="{{ url_for('pipeline.subir_coluna', pipeline_id=etapa.id) }}"
-                    class="pipeline-icon-btn"
-                    style="text-decoration:none;display:flex;align-items:center;justify-content:center;"
-                >↑</a>
-
-                <a
-                    href="{{ url_for('pipeline.descer_coluna', pipeline_id=etapa.id) }}"
-                    class="pipeline-icon-btn"
-                    style="text-decoration:none;display:flex;align-items:center;justify-content:center;"
-                >↓</a>
-
                 <form
                     method="POST"
                     action="{{ url_for('pipeline.excluir_coluna', pipeline_id=etapa.id) }}"
                     onsubmit="return confirm('Excluir esta coluna?');"
                 >
                     <button
-                        class="pipeline-icon-btn"
+                        class="pipeline-icon-btn delete"
                         type="submit"
-                        style="background:#7f1d1d;color:#fff;"
+                        title="Excluir coluna"
                     >
                         🗑️
                     </button>
@@ -525,6 +532,7 @@
                 <button
                     class="pipeline-icon-btn"
                     type="button"
+                    title="Renomear coluna"
                     onclick="abrirRenomear('{{ etapa.id }}','{{ etapa.nome }}')"
                 >✏️</button>
             </div>
@@ -535,7 +543,6 @@
             <div
                 class="lead-card"
                 data-lead-id="{{ lead.id }}"
-                onclick="abrirChatLead('{{ lead.telefone or '' }}')"
             >
 
                 <div
@@ -587,16 +594,6 @@
                 {% endif %}
 
                 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
-
-                    <a
-                        href="/whatsapp-qr/conversas?numero={{ lead.telefone }}&instance_name=mava_novo"
-                        class="btn-open"
-                        draggable="false"
-                        onclick="event.stopPropagation();"
-                    >
-                        WhatsApp
-                    </a>
-
                     <a
                         href="{{ url_for('leads.detalhe', lead_id=lead.id) }}"
                         class="btn-open"
@@ -605,7 +602,6 @@
                     >
                         Ver Lead
                     </a>
-
                 </div>
             </div>
             {% endfor %}
@@ -614,23 +610,6 @@
         {% endif %}
     </div>
 {% endfor %}
-</div>
-
-<div class="pipeline-chat-side" id="pipelineChatSide">
-
-    <div class="pipeline-chat-empty">
-        <div style="font-size:52px;">💬</div>
-
-        <h3>Chat do Lead</h3>
-
-        <p>
-            Clique em um lead para abrir
-            a conversa WhatsApp aqui ao lado.
-        </p>
-    </div>
-
-</div>
-
 </div>
 
 <div class="modal-bg" id="modalNova">
@@ -664,6 +643,8 @@
 </div>
 
 <script>
+let colunaArrastada = null;
+
 function abrirNovaColuna(){
     document.getElementById("modalNova").style.display = "flex";
 }
@@ -682,16 +663,23 @@ function fecharModal(){
 function arrastarLead(event){
     const leadId = event.currentTarget.dataset.leadId;
 
+    event.dataTransfer.setData("tipo", "lead");
     event.dataTransfer.setData("lead_id", leadId);
     event.dataTransfer.effectAllowed = "move";
 }
 
-function permitirSoltar(event){
+function permitirSoltarLead(event){
     event.preventDefault();
 }
 
 function soltarLead(event){
     event.preventDefault();
+
+    const tipo = event.dataTransfer.getData("tipo");
+
+    if(tipo === "coluna"){
+        return;
+    }
 
     const leadId = event.dataTransfer.getData("lead_id");
     const pipelineId = event.currentTarget.dataset.pipelineId;
@@ -723,35 +711,113 @@ function soltarLead(event){
     });
 }
 
-function abrirChatLead(numero){
+function arrastarColuna(event){
+    const handle = event.currentTarget;
+    const coluna = handle.closest(".pipeline-col");
 
-    const side = document.getElementById("pipelineChatSide");
+    colunaArrastada = coluna;
 
-    if(!numero){
+    event.dataTransfer.setData("tipo", "coluna");
+    event.dataTransfer.setData("pipeline_id", coluna.dataset.pipelineId);
+    event.dataTransfer.effectAllowed = "move";
 
-        side.innerHTML = `
-            <div class="pipeline-chat-empty">
-                <div style="font-size:42px;">⚠️</div>
-                <h3>Lead sem telefone</h3>
-            </div>
-        `;
+    setTimeout(() => {
+        coluna.classList.add("dragging-col");
+    }, 0);
+}
 
+function permitirSoltarColuna(event){
+    event.preventDefault();
+
+    const tipo = event.dataTransfer.getData("tipo");
+
+    if(tipo !== "coluna"){
         return;
     }
 
-    side.innerHTML = `
-        <iframe
-            src="/whatsapp-qr/conversas?numero=${numero}&instance_name=mava_novo"
-            style="
-                width:100%;
-                height:760px;
-                border:none;
-                background:#020617;
-                border-radius:24px;
-                display:block;
-            "
-        ></iframe>
-    `;
+    const alvo = event.currentTarget.closest(".pipeline-col");
+
+    document.querySelectorAll(".pipeline-col").forEach(coluna => {
+        coluna.classList.remove("drag-over-col");
+    });
+
+    if(alvo && alvo !== colunaArrastada){
+        alvo.classList.add("drag-over-col");
+    }
+}
+
+function soltarColuna(event){
+    event.preventDefault();
+
+    const tipo = event.dataTransfer.getData("tipo");
+
+    if(tipo !== "coluna"){
+        return;
+    }
+
+    const alvo = event.currentTarget.closest(".pipeline-col");
+    const grid = document.getElementById("pipelineGrid");
+
+    if(!colunaArrastada || !alvo || colunaArrastada === alvo){
+        limparEstadoColunas();
+        return;
+    }
+
+    const colunas = Array.from(grid.querySelectorAll(".pipeline-col"));
+    const indexArrastada = colunas.indexOf(colunaArrastada);
+    const indexAlvo = colunas.indexOf(alvo);
+
+    if(indexArrastada < indexAlvo){
+        grid.insertBefore(colunaArrastada, alvo.nextSibling);
+    }else{
+        grid.insertBefore(colunaArrastada, alvo);
+    }
+
+    salvarOrdemColunas();
+    limparEstadoColunas();
+}
+
+function finalizarArrastoColuna(){
+    limparEstadoColunas();
+}
+
+function limparEstadoColunas(){
+    document.querySelectorAll(".pipeline-col").forEach(coluna => {
+        coluna.classList.remove("dragging-col");
+        coluna.classList.remove("drag-over-col");
+    });
+
+    colunaArrastada = null;
+}
+
+function salvarOrdemColunas(){
+    const colunas = Array.from(document.querySelectorAll(".pipeline-col")).map((coluna, index) => {
+        return {
+            id: parseInt(coluna.dataset.pipelineId),
+            ordem: index
+        };
+    });
+
+    fetch("{{ url_for('pipeline.ordenar_colunas') }}", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            colunas:colunas
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(!data.sucesso){
+            alert("Erro ao salvar ordem das colunas.");
+            location.reload();
+        }
+    })
+    .catch(() => {
+        alert("Erro ao salvar ordem das colunas.");
+        location.reload();
+    });
 }
 </script>
 

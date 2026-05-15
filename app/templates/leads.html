@@ -62,6 +62,41 @@
 
 <div class="leads-card">
 
+    <form method="GET" action="{{ url_for('leads.lista') }}"
+        style="
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-bottom:18px;
+        ">
+
+        <input
+            type="text"
+            name="busca"
+            value="{{ busca or '' }}"
+            placeholder="Buscar por nome, telefone, email, origem ou produto..."
+            style="
+                flex:1;
+                min-width:260px;
+                background:#0f172a;
+                border:1px solid #334155;
+                color:#fff;
+                padding:12px 14px;
+                border-radius:14px;
+            "
+        >
+
+        <button class="btn" type="submit">
+            🔎 Buscar
+        </button>
+
+        {% if busca %}
+            <a class="btn btn-secondary" href="{{ url_for('leads.lista') }}">
+                Limpar
+            </a>
+        {% endif %}
+    </form>
+
     {% if leads %}
 
         <table>
@@ -140,9 +175,15 @@
 
     {% else %}
 
-        <p style="color:#64748b;">
-            Nenhum lead cadastrado.
-        </p>
+        {% if busca %}
+            <p style="color:#64748b;">
+                Nenhum lead encontrado para "{{ busca }}".
+            </p>
+        {% else %}
+            <p style="color:#64748b;">
+                Nenhum lead cadastrado.
+            </p>
+        {% endif %}
 
     {% endif %}
 

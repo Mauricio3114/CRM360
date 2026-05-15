@@ -47,22 +47,17 @@ def index():
     is_admin = current_user.tipo in ["admin", "master"]
 
     busca = request.args.get("busca", "").strip()
-
     tag_filtro = request.args.get("tag", "").strip()
-
     origem_filtro = request.args.get("origem", "").strip()
 
     if is_admin:
-
         vendedor_id = request.args.get("vendedor_id")
 
         if vendedor_id and vendedor_id != "todos":
             vendedor_id = int(vendedor_id)
         else:
             vendedor_id = None
-
     else:
-
         vendedor_id = current_user.id
 
     etapas = Pipeline.query.filter_by(
@@ -83,19 +78,16 @@ def index():
             query = query.filter_by(usuario_id=vendedor_id)
 
         if busca:
-
             query = query.filter(
                 Lead.nome.ilike(f"%{busca}%")
             )
 
         if tag_filtro:
-
             query = query.filter(
                 Lead.tags.like(f"%{tag_filtro}%")
             )
 
         if origem_filtro:
-
             query = query.filter_by(
                 origem=origem_filtro
             )
@@ -119,7 +111,6 @@ def index():
 @pipeline_bp.route("/nova-coluna", methods=["POST"])
 @login_required
 def nova_coluna():
-
     nome = request.form.get("nome")
 
     if not nome:
@@ -152,7 +143,6 @@ def nova_coluna():
 @pipeline_bp.route("/renomear/<int:pipeline_id>", methods=["POST"])
 @login_required
 def renomear_coluna(pipeline_id):
-
     pipeline = Pipeline.query.filter_by(
         id=pipeline_id,
         empresa_id=current_user.empresa_id
@@ -163,7 +153,6 @@ def renomear_coluna(pipeline_id):
     if nome:
         pipeline.nome = nome
         db.session.commit()
-
         flash("Coluna renomeada.", "success")
 
     return redirect(url_for("pipeline.index"))
@@ -172,7 +161,6 @@ def renomear_coluna(pipeline_id):
 @pipeline_bp.route("/subir/<int:pipeline_id>")
 @login_required
 def subir_coluna(pipeline_id):
-
     pipeline = Pipeline.query.filter_by(
         id=pipeline_id,
         empresa_id=current_user.empresa_id
@@ -197,7 +185,6 @@ def subir_coluna(pipeline_id):
 @pipeline_bp.route("/descer/<int:pipeline_id>")
 @login_required
 def descer_coluna(pipeline_id):
-
     pipeline = Pipeline.query.filter_by(
         id=pipeline_id,
         empresa_id=current_user.empresa_id
@@ -219,10 +206,44 @@ def descer_coluna(pipeline_id):
     return redirect(url_for("pipeline.index"))
 
 
+@pipeline_bp.route("/ordenar-colunas", methods=["POST"])
+@login_required
+def ordenar_colunas():
+    dados = request.get_json() or {}
+    colunas = dados.get("colunas", [])
+
+    if not colunas:
+        return jsonify({
+            "sucesso": False,
+            "mensagem": "Nenhuma coluna recebida."
+        })
+
+    for item in colunas:
+        pipeline_id = item.get("id")
+        ordem = item.get("ordem")
+
+        if pipeline_id is None or ordem is None:
+            continue
+
+        pipeline = Pipeline.query.filter_by(
+            id=pipeline_id,
+            empresa_id=current_user.empresa_id
+        ).first()
+
+        if pipeline:
+            pipeline.ordem = ordem
+
+    db.session.commit()
+
+    return jsonify({
+        "sucesso": True,
+        "mensagem": "Ordem das colunas atualizada."
+    })
+
+
 @pipeline_bp.route("/mover/<int:lead_id>/<int:pipeline_id>")
 @login_required
 def mover(lead_id, pipeline_id):
-
     lead = Lead.query.filter_by(
         id=lead_id,
         empresa_id=current_user.empresa_id
@@ -274,7 +295,6 @@ def mover(lead_id, pipeline_id):
 @pipeline_bp.route("/mover-ajax", methods=["POST"])
 @login_required
 def mover_ajax():
-
     dados = request.get_json()
 
     lead_id = dados.get("lead_id")
@@ -329,10 +349,10 @@ def mover_ajax():
 
     return jsonify({"sucesso": True})
 
+
 @pipeline_bp.route("/excluir-coluna/<int:pipeline_id>", methods=["POST"])
 @login_required
 def excluir_coluna(pipeline_id):
-
     pipeline = Pipeline.query.filter_by(
         id=pipeline_id,
         empresa_id=current_user.empresa_id
@@ -344,7 +364,6 @@ def excluir_coluna(pipeline_id):
     ).count()
 
     if leads > 0:
-
         flash(
             "Não é possível excluir coluna com leads.",
             "warning"
@@ -355,7 +374,6 @@ def excluir_coluna(pipeline_id):
         )
 
     db.session.delete(pipeline)
-
     db.session.commit()
 
     flash(
