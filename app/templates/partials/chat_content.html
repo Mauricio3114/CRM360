@@ -297,3 +297,59 @@ body{
     </button>
 
 </form>
+
+<script>
+const formChat = document.getElementById("chatSendForm");
+
+if(formChat){
+
+    formChat.addEventListener("submit", async function(e){
+
+        e.preventDefault();
+
+        const input = document.getElementById("mensagemInput");
+
+        const mensagem = input.value.trim();
+
+        if(!mensagem){
+            return;
+        }
+
+        const url = formChat.action;
+
+        const formData = new FormData();
+
+        formData.append("mensagem", mensagem);
+
+        try{
+
+            const response = await fetch(url,{
+                method:"POST",
+                body:formData,
+                credentials:"same-origin"
+            });
+
+            if(response.ok){
+
+                input.value = "";
+
+                window.location.reload();
+
+            }else{
+
+                alert("Erro ao enviar mensagem.");
+
+            }
+
+        }catch(erro){
+
+            console.log(erro);
+
+            alert("Erro ao enviar mensagem.");
+
+        }
+
+    });
+
+}
+</script>
