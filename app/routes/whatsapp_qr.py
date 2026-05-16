@@ -434,7 +434,11 @@ def conversas():
     if jid_ativo:
         jid_busca = resolver_jid_para_busca(jid_ativo, instance_name)
 
+        print("DEBUG CHAT AJAX CHAMOU BUSCA:", instance_name, jid_busca, flush=True)
+
         resultado_chat = service.buscar_mensagens(instance_name, jid_busca)
+
+        print("DEBUG CHAT AJAX RESULTADO:", resultado_chat, flush=True)
 
         if resultado_chat["ok"]:
             mensagens = resultado_chat["data"]
