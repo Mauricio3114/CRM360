@@ -403,89 +403,114 @@ class EvolutionAPIService:
 
         url = f"{self.base_url}/chat/findMessages/{instance_name}"
 
-        payload = {
-            "where": {
-                "key": {
-                    "remoteJid": remote_jid
-                }
-            },
-            "limit": 100
-        }
-
-        response = requests.post(
-            url,
-            headers=self.headers,
-            json=payload,
-            timeout=60
+        numero_base = (
+            remote_jid
+            .replace("@s.whatsapp.net", "")
+            .replace("@lid", "")
+            .replace("@g.us", "")
         )
 
-        try:
-            data = response.json()
-        except Exception:
-            data = {}
+        variacoes = [
+            f"{numero_base}@s.whatsapp.net",
+            numero_base
+        ]
 
-        print("STATUS FIND MESSAGES:", response.status_code, flush=True)
-        print("RETORNO FIND MESSAGES:", data, flush=True)
-
-        mensagens = []
-
-        if isinstance(data, dict):
-
-            if isinstance(data.get("messages"), dict):
-                mensagens = (
-                    data.get("messages", {}).get("records")
-                    or data.get("messages", {}).get("rows")
-                    or []
-                )
-
-            elif isinstance(data.get("messages"), list):
-                mensagens = data.get("messages")
-
-            elif isinstance(data.get("records"), list):
-                mensagens = data.get("records")
-
-            elif isinstance(data.get("data"), list):
-                mensagens = data.get("data")
-
-            elif isinstance(data.get("data"), dict):
-                mensagens = (
-                    data.get("data", {}).get("records")
-                    or data.get("data", {}).get("messages")
-                    or []
-                )
-
-        elif isinstance(data, list):
-            mensagens = data
+        if numero_base.startswith("55"):
+            sem_55 = numero_base[2:]
+            variacoes.append(f"{sem_55}@s.whatsapp.net")
+            variacoes.append(sem_55)
 
         mensagens_unicas = []
         ids_vistos = set()
 
-        for msg in mensagens:
+        for jid_teste in variacoes:
 
-            if not isinstance(msg, dict):
-                continue
+            payload = {
+                "where": {
+                    "key": {
+                        "remoteJid": jid_teste
+                    }
+                },
+                "limit": 100
+            }
 
-            key = msg.get("key", {})
-            msg_id = key.get("id") or msg.get("id")
+            try:
 
-            if not msg_id:
-                msg_id = str(msg)
+                response = requests.post(
+                    url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=60
+                )
 
-            if msg_id in ids_vistos:
-                continue
+                try:
+                    data = response.json()
+                except Exception:
+                    data = {}
 
-            ids_vistos.add(msg_id)
+                print("STATUS FIND MESSAGES:", response.status_code, flush=True)
+                print("BUSCANDO JID:", jid_teste, flush=True)
+                print("RETORNO FIND MESSAGES:", data, flush=True)
 
-            timestamp = (
-                msg.get("messageTimestamp")
-                or msg.get("timestamp")
-                or msg.get("createdAt")
-                or 0
-            )
+                mensagens = []
 
-            msg["hora_formatada"] = self.formatar_timestamp(timestamp)
+                if isinstance(data, dict):
 
-            mensagens_unicas.append(msg)
+                    if isinstance(data.get("messages"), dict):
+                        mensagens = (
+                            data.get("messages", {}).get("records")
+                            or data.get("messages", {}).get("rows")
+                            or []
+                        )
+
+                    elif isinstance(data.get("messages"), list):
+                        mensagens = data.get("messages")
+
+                    elif isinstance(data.get("records"), list):
+                        mensagens = data.get("records")
+
+                    elif isinstance(data.get("data"), list):
+                        mensagens = data.get("data")
+
+                    elif isinstance(data.get("data"), dict):
+                        mensagens = (
+                            data.get("data", {}).get("records")
+                            or data.get("data", {}).get("messages")
+                            or []
+                        )
+
+                elif isinstance(data, list):
+                    mensagens = data
+
+                for msg in mensagens:
+
+                    if not isinstance(msg, dict):
+                        continue
+
+                    key = msg.get("key", {})
+                    msg_id = key.get("id") or msg.get("id")
+
+                    if not msg_id:
+                        msg_id = str(msg)
+
+                    if msg_id in ids_vistos:
+                        continue
+
+                    ids_vistos.add(msg_id)
+
+                    timestamp = (
+                        msg.get("messageTimestamp")
+                        or msg.get("timestamp")
+                        or msg.get("createdAt")
+                        or 0
+                    )
+
+                    msg["hora_formatada"] = self.formatar_timestamp(timestamp)
+
+                    mensagens_unicas.append(msg)
+
+            except Exception as erro:
+                print("ERRO BUSCA MENSAGENS:", erro, flush=True)
 
         if not mensagens_unicas:
             mensagens_unicas = self.buscar_ultima_mensagem_por_chats(
@@ -503,10 +528,11 @@ class EvolutionAPIService:
         )
 
         return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
+            "ok": True,
+            "status_code": 200,
             "data": mensagens_unicas
         }
+
 
     def buscar_ultima_mensagem_por_chats(self, instance_name, remote_jid):
 
@@ -539,6 +565,11 @@ class EvolutionAPIService:
             .replace("@g.us", "")
         )
 
+        if numero_busca.startswith("55"):
+            numero_busca_sem55 = numero_busca[2:]
+        else:
+            numero_busca_sem55 = numero_busca
+
         for conversa in data:
 
             if not isinstance(conversa, dict):
@@ -553,7 +584,14 @@ class EvolutionAPIService:
                 .replace("@g.us", "")
             )
 
-            if conversa_jid != remote_jid and numero_conversa != numero_busca:
+            match = (
+                numero_conversa == numero_busca
+                or numero_conversa == numero_busca_sem55
+                or numero_busca in numero_conversa
+                or numero_busca_sem55 in numero_conversa
+            )
+
+            if not match:
                 continue
 
             ultima_msg = (
@@ -594,8 +632,6 @@ class EvolutionAPIService:
                         "conversation": ultima_msg
                     }
                 })
-
-            break
 
         return mensagens
 
