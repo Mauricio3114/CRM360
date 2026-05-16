@@ -434,11 +434,7 @@ def conversas():
     if jid_ativo:
         jid_busca = resolver_jid_para_busca(jid_ativo, instance_name)
 
-        print("DEBUG CHAT AJAX CHAMOU BUSCA:", instance_name, jid_busca, flush=True)
-
         resultado_chat = service.buscar_mensagens(instance_name, jid_busca)
-
-        print("DEBUG CHAT AJAX RESULTADO:", resultado_chat, flush=True)
 
         if resultado_chat["ok"]:
             mensagens = resultado_chat["data"]
@@ -613,6 +609,8 @@ def enviar_arquivo_chat(jid):
 def chat_ajax(jid):
 
     try:
+        print("ENTROU CHAT AJAX", jid, flush=True)
+
         service = EvolutionAPIService()
 
         instance_name = (
@@ -622,25 +620,32 @@ def chat_ajax(jid):
 
         jid_busca = resolver_jid_para_busca(jid, instance_name)
 
+        print("DEBUG CHAT AJAX CHAMOU BUSCA:", instance_name, jid_busca, flush=True)
+
         resultado_chat = service.buscar_mensagens(
             instance_name,
             jid_busca
         )
 
+        print("DEBUG CHAT AJAX RESULTADO:", resultado_chat, flush=True)
+
         mensagens = []
 
-        if resultado_chat["ok"]:
-            mensagens = resultado_chat["data"]
+        if resultado_chat and resultado_chat.get("ok"):
+            mensagens = resultado_chat.get("data") or []
 
             mensagens_unicas = []
             ids_vistos = set()
 
             for msg in mensagens:
+                if not isinstance(msg, dict):
+                    continue
+
                 key = msg.get("key", {})
                 msg_id = key.get("id") or msg.get("id")
 
                 if not msg_id:
-                    continue
+                    msg_id = str(msg)
 
                 if msg_id in ids_vistos:
                     continue
@@ -650,37 +655,46 @@ def chat_ajax(jid):
 
             mensagens = sorted(
                 mensagens_unicas,
-                key=lambda msg: msg.get(
-                    "messageTimestamp",
-                    0
+                key=lambda msg: (
+                    msg.get("messageTimestamp")
+                    or msg.get("timestamp")
+                    or 0
                 )
             )
 
         nome_contato = formatar_jid(jid)
 
-        resultado_conversas = service.buscar_conversas(instance_name)
+        try:
+            resultado_conversas = service.buscar_conversas(instance_name)
 
-        if resultado_conversas["ok"]:
-            for conversa in resultado_conversas["data"]:
+            if resultado_conversas and resultado_conversas.get("ok"):
+                for conversa in resultado_conversas.get("data", []):
 
-                if conversa.get("remoteJid") == jid:
+                    remote_jid = conversa.get("remoteJid")
 
-                    nome_contato = (
-                        conversa.get("nome_formatado")
-                        or conversa.get("name")
-                        or conversa.get("pushName")
-                        or conversa.get("notify")
-                        or conversa.get("contactName")
-                        or conversa.get("profileName")
-                        or formatar_jid(jid)
-                    )
+                    if remote_jid == jid or remote_jid == jid_busca:
 
-                    sincronizar_conversa_com_lead(
-                        conversa,
-                        instance_name
-                    )
+                        nome_contato = (
+                            conversa.get("nome_formatado")
+                            or conversa.get("name")
+                            or conversa.get("pushName")
+                            or conversa.get("notify")
+                            or conversa.get("contactName")
+                            or conversa.get("profileName")
+                            or formatar_jid(jid)
+                        )
 
-                    break
+                        sincronizar_conversa_com_lead(
+                            conversa,
+                            instance_name
+                        )
+
+                        break
+
+        except Exception as erro_conversas:
+            print("ERRO AO BUSCAR CONVERSAS NO CHAT AJAX:", erro_conversas, flush=True)
+
+        print("MENSAGENS RETORNADAS:", len(mensagens), flush=True)
 
         return render_template(
             "partials/chat_content.html",
@@ -692,7 +706,7 @@ def chat_ajax(jid):
 
     except Exception as erro:
 
-        print(f"[ERRO CHAT AJAX] {erro}")
+        print(f"[ERRO CHAT AJAX] {erro}", flush=True)
 
         return f"""
         <div style="
