@@ -16,6 +16,14 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # 🔥 evita queda SSL/Postgres no Render
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_timeout": 30,
+        "max_overflow": 20
+    }
+
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 587
     MAIL_USE_TLS = True

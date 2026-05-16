@@ -1452,11 +1452,22 @@ async function carregarChat(jid, rolarFinal=true){
 
     try{
 
+    
         const response = await fetch(
             `/whatsapp-qr/chat_ajax/${encodeURIComponent(jid)}?instance_name={{ instance_name }}`
         );
 
+        if(!response.ok){
+            console.log("Erro ao carregar chat:", response.status);
+            return;
+        }
+
         const html = await response.text();
+
+        if(html.includes("Internal Server Error")){
+            console.log("Erro interno no chat_ajax");
+            return;
+        }
 
         const chatContainer = document.getElementById("chatContainer");
 

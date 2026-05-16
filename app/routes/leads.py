@@ -90,11 +90,32 @@ def limpar_telefone(valor):
 def lista():
     criar_pipeline_padrao()
 
-    leads = Lead.query.filter_by(
-        empresa_id=current_user.empresa_id
-    ).all()
+    busca = request.args.get("busca", "").strip()
 
-    return render_template("leads.html", leads=leads)
+    query = Lead.query.filter_by(
+        empresa_id=current_user.empresa_id
+    )
+
+    if busca:
+        termo = f"%{busca}%"
+
+        query = query.filter(
+            db.or_(
+                Lead.nome.ilike(termo),
+                Lead.telefone.ilike(termo),
+                Lead.email.ilike(termo),
+                Lead.origem.ilike(termo),
+                Lead.produto_interesse.ilike(termo)
+            )
+        )
+
+    leads = query.order_by(Lead.id.desc()).all()
+
+    return render_template(
+        "leads.html",
+        leads=leads,
+        busca=busca
+    )
 
 
 @leads_bp.route("/novo", methods=["GET", "POST"])

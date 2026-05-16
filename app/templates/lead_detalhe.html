@@ -416,7 +416,7 @@
                         src="{{ url_for('whatsapp_qr.chat_ajax', jid=jid_whatsapp) }}?instance_name=mava_novo"
                         style="
                             width:100%;
-                            height:980px;
+                            height:720px;
                             border:none;
                             background:#020617;
                             display:block;
@@ -575,7 +575,7 @@
         <a
             href="{{ url_for(
                 'whatsapp_qr.conversas',
-                jid='55' + lead.telefone + '@s.whatsapp.net'
+                jid=jid_whatsapp
             ) }}"
             class="action-btn btn-whatsapp"
         >
@@ -663,7 +663,7 @@
             <a
                 href="{{ url_for(
                     'whatsapp_qr.conversas',
-                    jid='55' + lead.telefone + '@s.whatsapp.net'
+                    jid=jid_whatsapp
                 ) }}"
                 class="btn"
             >
