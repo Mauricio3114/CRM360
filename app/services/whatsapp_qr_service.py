@@ -79,6 +79,45 @@ class EvolutionAPIService:
 
         return nome
 
+    def extrair_texto_mensagem(self, msg):
+
+        if not isinstance(msg, dict):
+            return ""
+
+        message = msg.get("message") or msg.get("lastMessage") or {}
+
+        if isinstance(message, str):
+            return message
+
+        if not isinstance(message, dict):
+            return ""
+
+        texto = (
+            message.get("conversation")
+            or message.get("text")
+            or message.get("caption")
+        )
+
+        if texto:
+            return texto
+
+        if message.get("extendedTextMessage"):
+            return message.get("extendedTextMessage", {}).get("text", "")
+
+        if message.get("imageMessage"):
+            return message.get("imageMessage", {}).get("caption") or "Imagem recebida/enviada"
+
+        if message.get("audioMessage"):
+            return "Mensagem de áudio"
+
+        if message.get("videoMessage"):
+            return message.get("videoMessage", {}).get("caption") or "Vídeo recebido/enviado"
+
+        if message.get("documentMessage"):
+            return message.get("documentMessage", {}).get("fileName") or "Documento"
+
+        return ""
+
     def criar_instancia(self, instance_name="mava_crm"):
 
         url = f"{self.base_url}/instance/create"
@@ -118,8 +157,8 @@ class EvolutionAPIService:
             timeout=30
         )
 
-        print("STATUS CONNECT:", response.status_code)
-        print("TEXT CONNECT:", response.text)
+        print("STATUS CONNECT:", response.status_code, flush=True)
+        print("TEXT CONNECT:", response.text, flush=True)
 
         try:
             data = response.json()
@@ -186,8 +225,8 @@ class EvolutionAPIService:
             timeout=30
         )
 
-        print("STATUS STATE:", response.status_code)
-        print("TEXT STATE:", response.text)
+        print("STATUS STATE:", response.status_code, flush=True)
+        print("TEXT STATE:", response.text, flush=True)
 
         try:
             data = response.json()
@@ -352,7 +391,6 @@ class EvolutionAPIService:
                 reverse=True
             )
 
-            # 🔥 limita somente últimas conversas
             conversas = conversas[:30]
 
         return {
@@ -370,7 +408,8 @@ class EvolutionAPIService:
                 "key": {
                     "remoteJid": remote_jid
                 }
-            }
+            },
+            "limit": 100
         }
 
         response = requests.post(
@@ -382,42 +421,85 @@ class EvolutionAPIService:
 
         try:
             data = response.json()
-
         except Exception:
             data = {}
+
+        print("STATUS FIND MESSAGES:", response.status_code, flush=True)
+        print("RETORNO FIND MESSAGES:", data, flush=True)
 
         mensagens = []
 
         if isinstance(data, dict):
-            mensagens = data.get("messages", {}).get("records", [])
+
+            if isinstance(data.get("messages"), dict):
+                mensagens = (
+                    data.get("messages", {}).get("records")
+                    or data.get("messages", {}).get("rows")
+                    or []
+                )
+
+            elif isinstance(data.get("messages"), list):
+                mensagens = data.get("messages")
+
+            elif isinstance(data.get("records"), list):
+                mensagens = data.get("records")
+
+            elif isinstance(data.get("data"), list):
+                mensagens = data.get("data")
+
+            elif isinstance(data.get("data"), dict):
+                mensagens = (
+                    data.get("data", {}).get("records")
+                    or data.get("data", {}).get("messages")
+                    or []
+                )
+
+        elif isinstance(data, list):
+            mensagens = data
 
         mensagens_unicas = []
         ids_vistos = set()
 
         for msg in mensagens:
 
+            if not isinstance(msg, dict):
+                continue
+
             key = msg.get("key", {})
-            msg_id = key.get("id")
+            msg_id = key.get("id") or msg.get("id")
 
             if not msg_id:
-                continue
+                msg_id = str(msg)
 
             if msg_id in ids_vistos:
                 continue
 
             ids_vistos.add(msg_id)
 
-            timestamp = msg.get("messageTimestamp")
-
-            msg["hora_formatada"] = (
-                self.formatar_timestamp(timestamp)
+            timestamp = (
+                msg.get("messageTimestamp")
+                or msg.get("timestamp")
+                or msg.get("createdAt")
+                or 0
             )
+
+            msg["hora_formatada"] = self.formatar_timestamp(timestamp)
 
             mensagens_unicas.append(msg)
 
+        if not mensagens_unicas:
+            mensagens_unicas = self.buscar_ultima_mensagem_por_chats(
+                instance_name,
+                remote_jid
+            )
+
         mensagens_unicas = sorted(
             mensagens_unicas,
-            key=lambda x: x.get("messageTimestamp", 0)
+            key=lambda x: (
+                x.get("messageTimestamp")
+                or x.get("timestamp")
+                or 0
+            )
         )
 
         return {
@@ -425,6 +507,97 @@ class EvolutionAPIService:
             "status_code": response.status_code,
             "data": mensagens_unicas
         }
+
+    def buscar_ultima_mensagem_por_chats(self, instance_name, remote_jid):
+
+        url = f"{self.base_url}/chat/findChats/{instance_name}"
+
+        response = requests.post(
+            url,
+            headers=self.headers,
+            json={},
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+        except Exception:
+            data = []
+
+        print("FALLBACK FIND CHATS STATUS:", response.status_code, flush=True)
+        print("FALLBACK FIND CHATS RETORNO:", data, flush=True)
+
+        mensagens = []
+
+        if not isinstance(data, list):
+            return mensagens
+
+        numero_busca = (
+            remote_jid
+            .replace("@s.whatsapp.net", "")
+            .replace("@lid", "")
+            .replace("@g.us", "")
+        )
+
+        for conversa in data:
+
+            if not isinstance(conversa, dict):
+                continue
+
+            conversa_jid = conversa.get("remoteJid") or ""
+
+            numero_conversa = (
+                conversa_jid
+                .replace("@s.whatsapp.net", "")
+                .replace("@lid", "")
+                .replace("@g.us", "")
+            )
+
+            if conversa_jid != remote_jid and numero_conversa != numero_busca:
+                continue
+
+            ultima_msg = (
+                conversa.get("lastMessage")
+                or conversa.get("lastMessageText")
+                or conversa.get("conversation")
+                or conversa.get("message")
+                or ""
+            )
+
+            if isinstance(ultima_msg, dict):
+                ultima_msg = (
+                    ultima_msg.get("conversation")
+                    or ultima_msg.get("text")
+                    or ultima_msg.get("caption")
+                    or ""
+                )
+
+            timestamp = (
+                conversa.get("updatedAt")
+                or conversa.get("conversationTimestamp")
+                or conversa.get("messageTimestamp")
+                or conversa.get("lastMessageTimestamp")
+                or 0
+            )
+
+            if ultima_msg:
+
+                mensagens.append({
+                    "key": {
+                        "id": f"fallback-{conversa_jid}-{timestamp}",
+                        "remoteJid": remote_jid,
+                        "fromMe": False
+                    },
+                    "messageTimestamp": timestamp,
+                    "hora_formatada": self.formatar_timestamp(timestamp),
+                    "message": {
+                        "conversation": ultima_msg
+                    }
+                })
+
+            break
+
+        return mensagens
 
     def enviar_mensagem(self, instance_name, remote_jid, mensagem):
 
