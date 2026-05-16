@@ -608,6 +608,8 @@ def enviar_arquivo_chat(jid):
 @login_required
 def chat_ajax(jid):
 
+    raise Exception("TESTE CHAT AJAX NOVO")
+
     try:
         print("ENTROU CHAT AJAX", jid, flush=True)
 
