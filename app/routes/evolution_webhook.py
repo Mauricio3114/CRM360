@@ -93,7 +93,12 @@ def obter_entrada_whatsapp(empresa_id):
 
 @evolution_webhook_bp.route("/", methods=["POST"])
 def receber():
+
+    print("WEBHOOK EVOLUTION CHEGOU", flush=True)
+
     payload = request.get_json(silent=True) or {}
+
+    print("PAYLOAD WEBHOOK:", payload, flush=True)
 
     dados = payload.get("data") or payload
 
