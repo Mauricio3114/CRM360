@@ -622,10 +622,21 @@ def chat_ajax(jid):
 
         print("DEBUG CHAT AJAX CHAMOU BUSCA:", instance_name, jid_busca, flush=True)
 
-        resultado_chat = service.buscar_mensagens(
-            instance_name,
-            jid_busca
-        )
+        resultado_chat = {
+            "ok": False,
+            "data": []
+        }
+
+        try:
+
+            resultado_chat = service.buscar_mensagens(
+                instance_name,
+                jid_busca
+            )
+
+        except Exception as erro_busca:
+
+            print("ERRO BUSCAR MENSAGENS:", erro_busca)
 
         print("DEBUG CHAT AJAX RESULTADO:", resultado_chat, flush=True)
 
