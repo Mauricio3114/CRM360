@@ -441,18 +441,6 @@
     </div>
 </div>
 
-{% with mensagens = get_flashed_messages(with_categories=true) %}
-    {% if mensagens %}
-        <div class="pipeline-alerts">
-            {% for categoria, mensagem in mensagens %}
-                <div class="pipeline-alert">
-                    {{ mensagem }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endwith %}
-
 <div class="pipeline-toolbar">
     <div>
         <strong>Kanban Comercial</strong>
