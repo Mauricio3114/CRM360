@@ -70,6 +70,7 @@ def create_app():
             "asaas_webhook.webhook_asaas",
             "static",
             "contratacao.contratar",
+            "evolution_webhook.receber",
         ]
 
         if not current_user.is_authenticated:
@@ -123,6 +124,7 @@ def create_app():
     from app.routes.asaas_webhook import asaas_webhook_bp
     from app.routes.assinatura import assinatura_bp
     from app.routes.recuperar_senha import recuperar_senha_bp
+    from app.routes.evolution_webhook import evolution_webhook_bp
 
     with app.app_context():
         db.create_all()
@@ -185,6 +187,7 @@ def create_app():
     app.register_blueprint(asaas_webhook_bp)
     app.register_blueprint(assinatura_bp)
     app.register_blueprint(recuperar_senha_bp)
+    app.register_blueprint(evolution_webhook_bp)
 
     @app.route("/")
     def home():
