@@ -8,6 +8,7 @@ from app.services.whatsapp_qr_service import EvolutionAPIService
 from app.models.lid_mapping import LidMapping
 from app.models.pipeline import Pipeline
 from app.models.lead import Lead
+from app.models.mensagem_whatsapp import MensagemWhatsApp
 from app import db, socketio
 
 whatsapp_qr_bp = Blueprint("whatsapp_qr", __name__, url_prefix="/whatsapp-qr")
@@ -608,39 +609,50 @@ def enviar_arquivo_chat(jid):
 @login_required
 def chat_ajax(jid):
 
-    try:
+    instance_name = (
+        request.args.get("instance_name")
+        or "mava_novo"
+    )
 
-        instance_name = (
-            request.args.get("instance_name")
-            or "mava_novo"
-        )
+    nome_contato = formatar_jid(jid)
 
-        nome_contato = formatar_jid(jid)
+    telefone = (
+        jid.replace("@s.whatsapp.net", "")
+        .replace("@lid", "")
+        .replace("@g.us", "")
+    )
 
-        mensagens = []
+    if telefone and not telefone.startswith("55"):
+        telefone = f"55{telefone}"
 
-        return render_template(
-            "partials/chat_content.html",
-            mensagens=mensagens,
-            jid_ativo=jid,
-            nome_contato=nome_contato,
-            instance_name=instance_name
-        )
+    mensagens_banco = MensagemWhatsApp.query.filter_by(
+        telefone=telefone
+    ).order_by(
+        MensagemWhatsApp.criado_em.asc()
+    ).all()
 
-    except Exception as erro:
+    mensagens = []
 
-        print("ERRO CHAT AJAX:", erro)
+    for item in mensagens_banco:
+        mensagens.append({
+            "key": {
+                "id": f"local-{item.id}",
+                "fromMe": True if item.direcao == "enviada" else False
+            },
+            "messageTimestamp": int(item.criado_em.timestamp()),
+            "hora_formatada": item.criado_em.strftime("%H:%M"),
+            "message": {
+                "conversation": item.mensagem or ""
+            }
+        })
 
-        return """
-        <div style="
-            padding:20px;
-            color:white;
-            background:#020617;
-            border-radius:18px;
-        ">
-            Erro ao carregar conversa.
-        </div>
-        """
+    return render_template(
+        "partials/chat_content.html",
+        mensagens=mensagens,
+        jid_ativo=jid,
+        nome_contato=nome_contato,
+        instance_name=instance_name
+    )
 
 
 @whatsapp_qr_bp.route("/salvar_lid", methods=["POST"])
