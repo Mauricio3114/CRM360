@@ -608,22 +608,39 @@ def enviar_arquivo_chat(jid):
 @login_required
 def chat_ajax(jid):
 
-    instance_name = (
-        request.args.get("instance_name")
-        or "mava_novo"
-    )
+    try:
 
-    nome_contato = formatar_jid(jid)
+        instance_name = (
+            request.args.get("instance_name")
+            or "mava_novo"
+        )
 
-    mensagens = []
+        nome_contato = formatar_jid(jid)
 
-    return render_template(
-        "partials/chat_content.html",
-        mensagens=mensagens,
-        jid_ativo=jid,
-        nome_contato=nome_contato,
-        instance_name=instance_name
-    )
+        mensagens = []
+
+        return render_template(
+            "partials/chat_content.html",
+            mensagens=mensagens,
+            jid_ativo=jid,
+            nome_contato=nome_contato,
+            instance_name=instance_name
+        )
+
+    except Exception as erro:
+
+        print("ERRO CHAT AJAX:", erro)
+
+        return """
+        <div style="
+            padding:20px;
+            color:white;
+            background:#020617;
+            border-radius:18px;
+        ">
+            Erro ao carregar conversa.
+        </div>
+        """
 
 
 @whatsapp_qr_bp.route("/salvar_lid", methods=["POST"])
