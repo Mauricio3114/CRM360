@@ -154,7 +154,7 @@ class EvolutionAPIService:
         response = requests.get(
             url,
             headers=self.headers,
-            timeout=30
+            timeout=60
         )
 
         print("STATUS CONNECT:", response.status_code, flush=True)
@@ -172,39 +172,15 @@ class EvolutionAPIService:
 
         if isinstance(data, dict):
 
-            qr_base64 = data.get("base64")
-            qr_code = data.get("code")
+            base64_data = data.get("base64")
+
+            if base64_data:
+                qr_base64 = f"data:image/png;base64,{base64_data}"
 
             pairing_code = (
                 data.get("pairingCode")
                 or data.get("pairing_code")
             )
-
-            qrcode = data.get("qrcode")
-
-            if isinstance(qrcode, dict):
-
-                qr_base64 = (
-                    qr_base64
-                    or qrcode.get("base64")
-                )
-
-                qr_code = (
-                    qr_code
-                    or qrcode.get("code")
-                )
-
-                pairing_code = (
-                    pairing_code
-                    or qrcode.get("pairingCode")
-                    or qrcode.get("pairing_code")
-                )
-
-            elif isinstance(qrcode, str):
-                qr_base64 = qr_base64 or qrcode
-
-        if qr_base64 and not qr_base64.startswith("data:image"):
-            qr_base64 = f"data:image/png;base64,{qr_base64}"
 
         return {
             "ok": response.status_code in [200, 201],
@@ -215,44 +191,51 @@ class EvolutionAPIService:
             "pairing_code": pairing_code
         }
 
-    def status_instancia(self, instance_name="mava_crm"):
+        def status_instancia(self, instance_name="mava_crm"):
 
-        url = f"{self.base_url}/instance/connectionState/{instance_name}"
+            url = f"{self.base_url}/instance/fetchInstances"
 
-        response = requests.get(
-            url,
-            headers=self.headers,
-            timeout=30
-        )
-
-        print("STATUS STATE:", response.status_code, flush=True)
-        print("TEXT STATE:", response.text, flush=True)
-
-        try:
-            data = response.json()
-
-        except Exception:
-            data = {"erro": response.text}
-
-        estado = None
-
-        if isinstance(data, dict):
-
-            estado = (
-                data.get("state")
-                or data.get("status")
-                or data.get("connection")
+            response = requests.get(
+                url,
+                headers=self.headers,
+                timeout=60
             )
 
-            if isinstance(data.get("instance"), dict):
-                estado = data["instance"].get("state") or estado
+            print("STATUS STATE:", response.status_code, flush=True)
+            print("TEXT STATE:", response.text, flush=True)
 
-        return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
-            "data": data,
-            "estado": estado
-        }
+            try:
+                data = response.json()
+
+            except Exception:
+                data = []
+
+            estado = "close"
+
+            if isinstance(data, list):
+
+                for instancia in data:
+
+                    nome = (
+                        instancia.get("name")
+                        or instancia.get("instanceName")
+                    )
+
+                    if nome == instance_name:
+
+                        connection = instancia.get("connectionStatus")
+
+                        if connection:
+                            estado = connection
+
+                        break
+
+            return {
+                "ok": response.status_code in [200, 201],
+                "status_code": response.status_code,
+                "data": data,
+                "estado": estado
+            }
 
     def logout_instancia(self, instance_name="mava_crm"):
 
