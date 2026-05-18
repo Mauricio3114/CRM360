@@ -151,8 +151,13 @@ class EvolutionAPIService:
 
         url = f"{self.base_url}/instance/connect/{instance_name}"
 
-        response = requests.get(
+        payload = {
+            "number": ""
+        }
+
+        response = requests.post(
             url,
+            json=payload,
             headers=self.headers,
             timeout=60
         )
@@ -167,15 +172,22 @@ class EvolutionAPIService:
             data = {"erro": response.text}
 
         qr_base64 = None
-        qr_code = None
         pairing_code = None
 
         if isinstance(data, dict):
 
-            base64_data = data.get("base64")
+            base64_data = (
+                data.get("base64")
+                or data.get("qrcode")
+                or data.get("qr")
+            )
 
-            if base64_data:
-                qr_base64 = f"data:image/png;base64,{base64_data}"
+            if isinstance(base64_data, str):
+
+                if not base64_data.startswith("data:image"):
+                    qr_base64 = f"data:image/png;base64,{base64_data}"
+                else:
+                    qr_base64 = base64_data
 
             pairing_code = (
                 data.get("pairingCode")
@@ -187,55 +199,8 @@ class EvolutionAPIService:
             "status_code": response.status_code,
             "data": data,
             "qr_base64": qr_base64,
-            "qr_code": qr_code,
             "pairing_code": pairing_code
         }
-
-        def status_instancia(self, instance_name="mava_crm"):
-
-            url = f"{self.base_url}/instance/fetchInstances"
-
-            response = requests.get(
-                url,
-                headers=self.headers,
-                timeout=60
-            )
-
-            print("STATUS STATE:", response.status_code, flush=True)
-            print("TEXT STATE:", response.text, flush=True)
-
-            try:
-                data = response.json()
-
-            except Exception:
-                data = []
-
-            estado = "close"
-
-            if isinstance(data, list):
-
-                for instancia in data:
-
-                    nome = (
-                        instancia.get("name")
-                        or instancia.get("instanceName")
-                    )
-
-                    if nome == instance_name:
-
-                        connection = instancia.get("connectionStatus")
-
-                        if connection:
-                            estado = connection
-
-                        break
-
-            return {
-                "ok": response.status_code in [200, 201],
-                "status_code": response.status_code,
-                "data": data,
-                "estado": estado
-            }
 
     def logout_instancia(self, instance_name="mava_crm"):
 
