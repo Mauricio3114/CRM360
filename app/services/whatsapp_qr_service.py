@@ -149,9 +149,9 @@ class EvolutionAPIService:
 
     def conectar_qr(self, instance_name="mava_crm"):
 
-        url = f"{self.base_url}/instance/connect/{instance_name}"
+        url = f"{self.base_url}/instance/connect/{instance_name}?number="
 
-        response = requests.get(
+        response = requests.post(
             url,
             headers=self.headers,
             timeout=60
