@@ -151,13 +151,8 @@ class EvolutionAPIService:
 
         url = f"{self.base_url}/instance/connect/{instance_name}"
 
-        payload = {
-            "number": ""
-        }
-
-        response = requests.post(
+        response = requests.get(
             url,
-            json=payload,
             headers=self.headers,
             timeout=60
         )
@@ -176,22 +171,28 @@ class EvolutionAPIService:
 
         if isinstance(data, dict):
 
-            base64_data = (
+            qr_data = (
                 data.get("base64")
                 or data.get("qrcode")
                 or data.get("qr")
+                or data.get("code")
+                or data.get("data", {}).get("base64")
+                or data.get("data", {}).get("qrcode")
+                or data.get("data", {}).get("qr")
             )
 
-            if isinstance(base64_data, str):
+            if isinstance(qr_data, str):
 
-                if not base64_data.startswith("data:image"):
-                    qr_base64 = f"data:image/png;base64,{base64_data}"
+                if qr_data.startswith("data:image"):
+                    qr_base64 = qr_data
+
                 else:
-                    qr_base64 = base64_data
+                    qr_base64 = f"data:image/png;base64,{qr_data}"
 
             pairing_code = (
                 data.get("pairingCode")
                 or data.get("pairing_code")
+                or data.get("data", {}).get("pairingCode")
             )
 
         return {
