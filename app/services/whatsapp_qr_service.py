@@ -151,15 +151,10 @@ class EvolutionAPIService:
 
         try:
 
-            url = f"{self.base_url}/instance/connect"
+            url = f"{self.base_url}/instance/connect/{instance_name}"
 
-            payload = {
-                "instanceName": instance_name
-            }
-
-            response = requests.post(
+            response = requests.get(
                 url,
-                json=payload,
                 headers=self.headers,
                 timeout=60
             )
@@ -203,15 +198,15 @@ class EvolutionAPIService:
                 "erro": str(e)
             }
 
-    def deletar_instancia(self, instance_name="mava_crm"):
+        def deletar_instancia(self, instance_name="mava_crm"):
 
-        url = f"{self.base_url}/instance/delete/{instance_name}"
+            url = f"{self.base_url}/instance/delete/{instance_name}"
 
-        response = requests.delete(
-            url,
-            headers=self.headers,
-            timeout=30
-        )
+            response = requests.delete(
+                url,
+                headers=self.headers,
+                timeout=30
+            )
 
         try:
             data = response.json()
