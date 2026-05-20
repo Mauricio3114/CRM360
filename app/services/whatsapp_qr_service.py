@@ -147,31 +147,35 @@ class EvolutionAPIService:
             "data": data
         }
 
-    def conectar_qr(self, instance_name="mava_crm"):
-
-        url = f"{self.base_url}/instance/connect/{instance_name}?number="
-
-        response = requests.post(
-            url,
-            headers=self.headers,
-            timeout=60
-        )
-
-        print("STATUS CONNECT:", response.status_code, flush=True)
-        print("TEXT CONNECT:", response.text, flush=True)
+    def conectar_qr(self, instance_name):
 
         try:
-            data = response.json()
 
-        except Exception:
-            data = {"erro": response.text}
+            url = f"{self.base_url}/instance/connect"
 
-        qr_base64 = None
-        pairing_code = None
+            payload = {
+                "instanceName": instance_name
+            }
 
-        if isinstance(data, dict):
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self.headers,
+                timeout=60
+            )
 
-            qr_data = (
+            print("STATUS CONNECT:", response.status_code, flush=True)
+            print("TEXT CONNECT:", response.text, flush=True)
+
+            try:
+                data = response.json()
+
+            except Exception:
+                data = {
+                    "raw": response.text
+                }
+
+            qr_code = (
                 data.get("base64")
                 or data.get("qrcode")
                 or data.get("qr")
@@ -181,49 +185,23 @@ class EvolutionAPIService:
                 or data.get("data", {}).get("qr")
             )
 
-            if isinstance(qr_data, str):
+            return {
+                "ok": response.status_code in [200, 201],
+                "status_code": response.status_code,
+                "data": data,
+                "qr_base64": qr_code,
+                "qr_code": qr_code,
+                "pairing_code": data.get("pairingCode")
+            }
 
-                if qr_data.startswith("data:image"):
-                    qr_base64 = qr_data
+        except Exception as e:
 
-                else:
-                    qr_base64 = f"data:image/png;base64,{qr_data}"
+            print("ERRO CONNECT QR:", str(e), flush=True)
 
-            pairing_code = (
-                data.get("pairingCode")
-                or data.get("pairing_code")
-                or data.get("data", {}).get("pairingCode")
-            )
-
-        return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
-            "data": data,
-            "qr_base64": qr_base64,
-            "pairing_code": pairing_code
-        }
-
-    def logout_instancia(self, instance_name="mava_crm"):
-
-        url = f"{self.base_url}/instance/logout/{instance_name}"
-
-        response = requests.delete(
-            url,
-            headers=self.headers,
-            timeout=30
-        )
-
-        try:
-            data = response.json()
-
-        except Exception:
-            data = {"retorno": response.text}
-
-        return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
-            "data": data
-        }
+            return {
+                "ok": False,
+                "erro": str(e)
+            }
 
     def deletar_instancia(self, instance_name="mava_crm"):
 
