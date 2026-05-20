@@ -291,8 +291,16 @@ def index():
             elif acao == "conectar":
                 resultado = service.conectar_qr(instance_name)
 
-                qr_base64 = resultado.get("qr_base64")
-                qr_code = resultado.get("qr_code")
+                qr_base64 = None
+                qr_code = None
+                qr_code = (
+                    resultado.get("qr_code")
+                    or resultado.get("base64")
+                    or resultado.get("qrcode")
+                    or resultado.get("qr")
+                    or resultado.get("data", {}).get("base64")
+                    or resultado.get("data", {}).get("qrcode")
+                )
                 pairing_code = resultado.get("pairing_code")
 
                 flash(
