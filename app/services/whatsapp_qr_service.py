@@ -1,6 +1,9 @@
 import os
 import requests
+import base64
+import qrcode
 from datetime import datetime
+from io import BytesIO
 
 
 class EvolutionAPIService:
@@ -170,15 +173,61 @@ class EvolutionAPIService:
                     "raw": response.text
                 }
 
-            qr_code = (
+            qr_texto = (
                 data.get("base64")
-                or data.get("qrcode")
-                or data.get("qr")
-                or data.get("code")
-                or data.get("data", {}).get("base64")
-                or data.get("data", {}).get("qrcode")
-                or data.get("data", {}).get("qr")
+                or (
+                    data.get("qrcode", {}).get("base64")
+                    if isinstance(data.get("qrcode"), dict)
+                    else None
+                )
             )
+
+            if not qr_texto:
+
+                qr_texto = (
+                    data.get("code")
+                    or data.get("qr")
+                    or (
+                        data.get("qrcode", {}).get("code")
+                        if isinstance(data.get("qrcode"), dict)
+                        else None
+                    )
+                    or data.get("data", {}).get("code")
+                    or data.get("data", {}).get("qr")
+                )
+
+            qr_code = None
+
+            if qr_texto:
+
+                if str(qr_texto).startswith("data:image"):
+
+                    qr_code = qr_texto
+
+                else:
+
+                    try:
+
+                        img = qrcode.make(qr_texto)
+
+                        buffer = BytesIO()
+
+                        img.save(buffer, format="PNG")
+
+                        qr_code = (
+                            "data:image/png;base64,"
+                            + base64.b64encode(
+                                buffer.getvalue()
+                            ).decode()
+                        )
+
+                    except Exception as erro_qr:
+
+                        print(
+                            "ERRO GERAR QR:",
+                            str(erro_qr),
+                            flush=True
+                        )
 
             return {
                 "ok": response.status_code in [200, 201],

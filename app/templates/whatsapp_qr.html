@@ -199,9 +199,9 @@
 
                     <div class="qr-box">
                         <img src="{{ qr_base64 }}"
-                             alt="QR Code WhatsApp"
-                             class="img-fluid"
-                             style="max-width: 320px;">
+                            alt="QR Code WhatsApp"
+                            class="img-fluid"
+                            style="max-width: 320px; border-radius:20px;">
                     </div>
 
                     <div class="mt-4">
@@ -220,34 +220,21 @@
                 {% elif qr_code %}
 
                     <div class="qr-box">
-                        <div id="qrcode"></div>
+                        <img src="data:image/png;base64,{{ qr_code }}"
+                            alt="QR Code WhatsApp"
+                            class="img-fluid"
+                            style="max-width: 320px; border-radius:20px;">
                     </div>
 
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                    <div class="mt-4">
 
-                    <script>
-                        new QRCode(document.getElementById("qrcode"), {
-                            text: "{{ qr_code }}",
-                            width: 320,
-                            height: 320
-                        });
-                    </script>
+                        <h5 class="fw-bold text-white">
+                            Escaneie com seu WhatsApp
+                        </h5>
 
-                {% else %}
-
-                    <div class="py-5">
-
-                        <div class="whats-icon">
-                            📱
-                        </div>
-
-                        <h4 class="fw-bold text-white mt-4">
-                            Nenhum QR gerado ainda
-                        </h4>
-
-                        <p class="info-mini mt-3">
-                            Primeiro clique em criar instância,
-                            depois em gerar QR Code.
+                        <p class="info-mini">
+                            Abra o WhatsApp → Aparelhos conectados →
+                            Conectar aparelho.
                         </p>
 
                     </div>
