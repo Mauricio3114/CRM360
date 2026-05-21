@@ -186,11 +186,7 @@ class EvolutionAPIService:
                 or data.get("data", {}).get("base64")
                 or data.get("data", {}).get("qrcode")
                 or data.get("data", {}).get("qr")
-                or data.get("data", {}).get("code")
             )
-
-            if qr_code and not qr_code.startswith("data:image"):
-                qr_code = f"data:image/png;base64,{qr_code}"
 
             return {
                 "ok": response.status_code in [200, 201],
@@ -207,7 +203,7 @@ class EvolutionAPIService:
 
             return {
                 "ok": False,
-                "erro": str(e)
+                "error": str(e)
             }
 
         def deletar_instancia(self, instance_name="mava_crm"):
