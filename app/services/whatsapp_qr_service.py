@@ -154,10 +154,15 @@ class EvolutionAPIService:
 
         try:
 
-            url = f"{self.base_url}/instance/connect/{instance_name}"
+            url = f"{self.base_url}/instance/connect"
 
-            response = requests.get(
+            payload = {
+                "instanceName": instance_name
+            }
+
+            response = requests.post(
                 url,
+                json=payload,
                 headers=self.headers,
                 timeout=60
             )
@@ -173,61 +178,19 @@ class EvolutionAPIService:
                     "raw": response.text
                 }
 
-            qr_texto = (
+            qr_code = (
                 data.get("base64")
-                or (
-                    data.get("qrcode", {}).get("base64")
-                    if isinstance(data.get("qrcode"), dict)
-                    else None
-                )
+                or data.get("qrcode")
+                or data.get("qr")
+                or data.get("code")
+                or data.get("data", {}).get("base64")
+                or data.get("data", {}).get("qrcode")
+                or data.get("data", {}).get("qr")
+                or data.get("data", {}).get("code")
             )
 
-            if not qr_texto:
-
-                qr_texto = (
-                    data.get("code")
-                    or data.get("qr")
-                    or (
-                        data.get("qrcode", {}).get("code")
-                        if isinstance(data.get("qrcode"), dict)
-                        else None
-                    )
-                    or data.get("data", {}).get("code")
-                    or data.get("data", {}).get("qr")
-                )
-
-            qr_code = None
-
-            if qr_texto:
-
-                if str(qr_texto).startswith("data:image"):
-
-                    qr_code = qr_texto
-
-                else:
-
-                    try:
-
-                        img = qrcode.make(qr_texto)
-
-                        buffer = BytesIO()
-
-                        img.save(buffer, format="PNG")
-
-                        qr_code = (
-                            "data:image/png;base64,"
-                            + base64.b64encode(
-                                buffer.getvalue()
-                            ).decode()
-                        )
-
-                    except Exception as erro_qr:
-
-                        print(
-                            "ERRO GERAR QR:",
-                            str(erro_qr),
-                            flush=True
-                        )
+            if qr_code and not qr_code.startswith("data:image"):
+                qr_code = f"data:image/png;base64,{qr_code}"
 
             return {
                 "ok": response.status_code in [200, 201],
