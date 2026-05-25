@@ -54,6 +54,7 @@
         max-height: 350px;
         overflow-y: auto;
         font-size: 13px;
+        white-space: pre-wrap;
     }
 
     .titulo-gradient {
@@ -79,11 +80,18 @@
         margin: auto;
         font-size: 42px;
     }
+
+    .empty-qr {
+        border: 1px dashed rgba(255,255,255,0.12);
+        border-radius: 24px;
+        padding: 36px;
+        background: rgba(255,255,255,0.03);
+    }
 </style>
 
 <div class="container-fluid py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
 
         <div>
             <h1 class="titulo-gradient mb-1">
@@ -95,15 +103,19 @@
             </p>
         </div>
 
-        <a href="{{ url_for('whatsapp_qr.conversas', instance_name=instance_name) }}"
-            class="btn btn-success rounded-4 px-4">
-            💬 Abrir Conversas
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
 
-        <a href="{{ url_for('dashboard.home') }}"
-           class="btn btn-outline-light rounded-4 px-4">
-            ← Voltar
-        </a>
+            <a href="{{ url_for('whatsapp_qr.conversas', instance_name=instance_name) }}"
+               class="btn btn-success rounded-4 px-4">
+                💬 Abrir Conversas
+            </a>
+
+            <a href="{{ url_for('dashboard.home') }}"
+               class="btn btn-outline-light rounded-4 px-4">
+                ← Voltar
+            </a>
+
+        </div>
 
     </div>
 
@@ -155,14 +167,14 @@
                                 name="acao"
                                 value="criar"
                                 class="btn btn-primary btn-whats">
-                            🚀 Criar instância
+                            🚀 Criar instância e mostrar QR
                         </button>
 
                         <button type="submit"
                                 name="acao"
                                 value="conectar"
                                 class="btn btn-success btn-whats">
-                            📲 Gerar QR Code
+                            📲 Gerar QR Code novamente
                         </button>
 
                         <button type="submit"
@@ -183,6 +195,14 @@
 
                 </form>
 
+                <div class="mt-4 p-3 rounded-4" style="background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.12);">
+                    <small class="info-mini">
+                        Agora o QR é buscado direto do retorno da Evolution em
+                        <strong>qrcode.base64</strong>, usando o fluxo comprovado
+                        em <strong>/instance/create</strong>.
+                    </small>
+                </div>
+
             </div>
 
         </div>
@@ -190,6 +210,10 @@
         <div class="col-lg-8">
 
             <div class="whats-card p-5 text-center">
+
+                <div class="whats-icon mb-4">
+                    📱
+                </div>
 
                 <h3 class="fw-bold text-white mb-4">
                     QR Code do WhatsApp
@@ -199,9 +223,9 @@
 
                     <div class="qr-box">
                         <img src="{{ qr_base64 }}"
-                            alt="QR Code WhatsApp"
-                            class="img-fluid"
-                            style="max-width: 320px; border-radius:20px;">
+                             alt="QR Code WhatsApp"
+                             class="img-fluid"
+                             style="max-width: 320px; border-radius:20px;">
                     </div>
 
                     <div class="mt-4">
@@ -220,10 +244,20 @@
                 {% elif qr_code %}
 
                     <div class="qr-box">
-                        <img src="data:image/png;base64,{{ qr_code }}"
+
+                        <img
+                            src="{{ qr_code }}"
                             alt="QR Code WhatsApp"
                             class="img-fluid"
-                            style="max-width: 320px; border-radius:20px;">
+                            style="
+                                max-width:320px;
+                                width:100%;
+                                border-radius:20px;
+                                background:white;
+                                padding:15px;
+                            "
+                        >
+
                     </div>
 
                     <div class="mt-4">
@@ -233,8 +267,25 @@
                         </h5>
 
                         <p class="info-mini">
-                            Abra o WhatsApp → Aparelhos conectados →
+                            Abra o WhatsApp →
+                            Aparelhos conectados →
                             Conectar aparelho.
+                        </p>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-qr">
+
+                        <h5 class="fw-bold text-white mb-2">
+                            Nenhum QR gerado ainda
+                        </h5>
+
+                        <p class="info-mini mb-0">
+                            Clique em <strong>Criar instância e mostrar QR</strong>.
+                            O sistema vai usar o retorno
+                            <strong>data["qrcode"]["base64"]</strong> da Evolution API.
                         </p>
 
                     </div>

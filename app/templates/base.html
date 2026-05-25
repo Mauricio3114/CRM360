@@ -291,25 +291,29 @@
             Operação
         </div>
 
-        <a href="{{ url_for('financeiro.index') }}">
-            💰 Financeiro
-        </a>
-
         <a href="{{ url_for('agenda.index') }}">
             📅 Agenda
         </a>
 
-        <a href="{{ url_for('metas.index') }}">
-            🎯 Metas
-        </a>
+        {% if current_user.tipo in ["admin", "master"] %}
 
-        <a href="{{ url_for('relatorios.index') }}">
-            📄 Relatórios
-        </a>
+            <a href="{{ url_for('financeiro.index') }}">
+                💰 Financeiro
+            </a>
 
-        <a href="{{ url_for('usuarios.lista') }}">
-            👤 Usuários
-        </a>
+            <a href="{{ url_for('metas.index') }}">
+                🎯 Metas
+            </a>
+
+            <a href="{{ url_for('relatorios.index') }}">
+                📄 Relatórios
+            </a>
+
+            <a href="{{ url_for('usuarios.lista') }}">
+                👤 Usuários
+            </a>
+
+        {% endif %}
 
         <div class="menu-section">
             Inteligência
@@ -342,6 +346,8 @@
             {% endif %}
         </a>
 
+        {% if current_user.tipo in ["admin", "master"] %}
+
         <div class="menu-section">
             SaaS
         </div>
@@ -356,6 +362,10 @@
 
         </a>
 
+        {% endif %}
+
+        {% if current_user.tipo in ["admin", "master"] %}
+
         <div class="menu-section">
             Configurações
         </div>
@@ -368,6 +378,8 @@
             ⚙️ WhatsApp
         </a>
 
+        {% endif %}
+
         <hr>
 
         <a class="logout-link" href="{{ url_for('auth.logout') }}">
@@ -378,7 +390,7 @@
 
     <div class="content">
 
-        {% if current_user.is_authenticated and current_user.empresa_id %}
+        {% if current_user.is_authenticated and current_user.empresa_id and current_user.tipo in ["admin", "master"] %}
 
             <div class="trial-alert">
 

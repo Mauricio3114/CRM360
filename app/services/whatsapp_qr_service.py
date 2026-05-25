@@ -1,15 +1,11 @@
 import os
 import requests
-import base64
-import qrcode
 from datetime import datetime
-from io import BytesIO
 
 
 class EvolutionAPIService:
 
     def __init__(self):
-
         self.base_url = os.getenv(
             "EVOLUTION_API_URL",
             "http://localhost:8080"
@@ -25,8 +21,33 @@ class EvolutionAPIService:
             "Content-Type": "application/json"
         }
 
-    def formatar_numero(self, jid):
+    def extrair_qr_base64(self, data):
+        if not isinstance(data, dict):
+            return None
 
+        qrcode_data = data.get("qrcode")
+
+        if isinstance(qrcode_data, dict):
+            return (
+                qrcode_data.get("base64")
+                or qrcode_data.get("qrcode")
+                or qrcode_data.get("qr")
+            )
+
+        if isinstance(qrcode_data, str):
+            return qrcode_data
+
+        return (
+            data.get("base64")
+            or data.get("qr")
+            or data.get("code")
+            or data.get("qrcode")
+            or data.get("data", {}).get("base64")
+            or data.get("data", {}).get("qrcode")
+            or data.get("data", {}).get("qr")
+        )
+
+    def formatar_numero(self, jid):
         if not jid:
             return "Contato"
 
@@ -37,36 +58,29 @@ class EvolutionAPIService:
         )
 
         if numero.startswith("55") and len(numero) >= 12:
-
             ddd = numero[2:4]
             telefone = numero[4:]
 
             if len(telefone) == 9:
                 return f"({ddd}) {telefone[:5]}-{telefone[5:]}"
-
             elif len(telefone) == 8:
                 return f"({ddd}) {telefone[:4]}-{telefone[4:]}"
 
         return numero
 
     def formatar_timestamp(self, timestamp):
-
         try:
-
             timestamp = int(timestamp)
 
             if timestamp > 9999999999:
                 timestamp = timestamp / 1000
 
             data = datetime.fromtimestamp(timestamp)
-
             return data.strftime("%H:%M")
-
         except Exception:
             return "agora"
 
     def extrair_nome_conversa(self, conversa):
-
         nome = (
             conversa.get("name")
             or conversa.get("pushName")
@@ -83,7 +97,6 @@ class EvolutionAPIService:
         return nome
 
     def extrair_texto_mensagem(self, msg):
-
         if not isinstance(msg, dict):
             return ""
 
@@ -121,8 +134,7 @@ class EvolutionAPIService:
 
         return ""
 
-    def criar_instancia(self, instance_name="mava_crm"):
-
+    def criar_instancia(self, instance_name="mava_novo"):
         url = f"{self.base_url}/instance/create"
 
         payload = {
@@ -135,90 +147,145 @@ class EvolutionAPIService:
             url,
             json=payload,
             headers=self.headers,
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+        except Exception:
+            data = {"erro": response.text}
+
+        qr_base64 = self.extrair_qr_base64(data)
+
+        return {
+            "ok": response.status_code in [200, 201],
+            "status_code": response.status_code,
+            "data": data,
+            "qr_base64": qr_base64,
+            "qr_code": qr_base64,
+            "pairing_code": (
+                data.get("pairingCode")
+                or data.get("pairing_code")
+                or data.get("qrcode", {}).get("pairingCode")
+                if isinstance(data.get("qrcode"), dict)
+                else None
+            )
+        }
+
+    def conectar_qr(self, instance_name="mava_novo"):
+        # Evolution v2.2.3 no teu ambiente já retorna o QR pelo /instance/create.
+        # Por segurança, este método usa o mesmo fluxo comprovado funcionando.
+        return self.criar_instancia(instance_name)
+
+    def status_instancia(self, instance_name="mava_novo"):
+        urls = [
+            f"{self.base_url}/instance/connectionState/{instance_name}",
+            f"{self.base_url}/instance/fetchInstances"
+        ]
+
+        ultimo_retorno = None
+
+        for url in urls:
+            try:
+                if "fetchInstances" in url:
+                    response = requests.get(
+                        url,
+                        headers=self.headers,
+                        timeout=30
+                    )
+                else:
+                    response = requests.get(
+                        url,
+                        headers=self.headers,
+                        timeout=30
+                    )
+
+                try:
+                    data = response.json()
+                except Exception:
+                    data = {"retorno": response.text}
+
+                ultimo_retorno = data
+
+                estado = None
+
+                if isinstance(data, dict):
+                    estado = (
+                        data.get("state")
+                        or data.get("status")
+                        or data.get("connectionStatus")
+                        or data.get("instance", {}).get("state")
+                        or data.get("instance", {}).get("status")
+                    )
+
+                if response.status_code in [200, 201]:
+                    return {
+                        "ok": True,
+                        "status_code": response.status_code,
+                        "data": data,
+                        "estado": estado or "desconhecido"
+                    }
+
+            except Exception as e:
+                ultimo_retorno = {"erro": str(e)}
+
+        return {
+            "ok": False,
+            "status_code": 500,
+            "data": ultimo_retorno,
+            "estado": None
+        }
+
+    def logout_instancia(self, instance_name="mava_novo"):
+        urls = [
+            f"{self.base_url}/instance/logout/{instance_name}",
+            f"{self.base_url}/instance/delete/{instance_name}"
+        ]
+
+        ultimo_retorno = None
+
+        for url in urls:
+            try:
+                response = requests.delete(
+                    url,
+                    headers=self.headers,
+                    timeout=30
+                )
+
+                try:
+                    data = response.json()
+                except Exception:
+                    data = {"retorno": response.text}
+
+                ultimo_retorno = data
+
+                if response.status_code in [200, 201]:
+                    return {
+                        "ok": True,
+                        "status_code": response.status_code,
+                        "data": data
+                    }
+
+            except Exception as e:
+                ultimo_retorno = {"erro": str(e)}
+
+        return {
+            "ok": False,
+            "status_code": 500,
+            "data": ultimo_retorno
+        }
+
+    def deletar_instancia(self, instance_name="mava_novo"):
+        url = f"{self.base_url}/instance/delete/{instance_name}"
+
+        response = requests.delete(
+            url,
+            headers=self.headers,
             timeout=30
         )
 
         try:
             data = response.json()
-
-        except Exception:
-            data = {"erro": response.text}
-
-        return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
-            "data": data
-        }
-
-    def conectar_qr(self, instance_name):
-
-        try:
-
-            url = f"{self.base_url}/instance/connect"
-
-            payload = {
-                "instanceName": instance_name
-            }
-
-            response = requests.post(
-                url,
-                json=payload,
-                headers=self.headers,
-                timeout=60
-            )
-
-            print("STATUS CONNECT:", response.status_code, flush=True)
-            print("TEXT CONNECT:", response.text, flush=True)
-
-            try:
-                data = response.json()
-
-            except Exception:
-                data = {
-                    "raw": response.text
-                }
-
-            qr_code = (
-                data.get("base64")
-                or data.get("qrcode")
-                or data.get("qr")
-                or data.get("code")
-                or data.get("data", {}).get("base64")
-                or data.get("data", {}).get("qrcode")
-                or data.get("data", {}).get("qr")
-            )
-
-            return {
-                "ok": response.status_code in [200, 201],
-                "status_code": response.status_code,
-                "data": data,
-                "qr_base64": qr_code,
-                "qr_code": qr_code,
-                "pairing_code": data.get("pairingCode")
-            }
-
-        except Exception as e:
-
-            print("ERRO CONNECT QR:", str(e), flush=True)
-
-            return {
-                "ok": False,
-                "error": str(e)
-            }
-
-        def deletar_instancia(self, instance_name="mava_crm"):
-
-            url = f"{self.base_url}/instance/delete/{instance_name}"
-
-            response = requests.delete(
-                url,
-                headers=self.headers,
-                timeout=30
-            )
-
-        try:
-            data = response.json()
-
         except Exception:
             data = {"retorno": response.text}
 
@@ -229,7 +296,6 @@ class EvolutionAPIService:
         }
 
     def buscar_conversas(self, instance_name="mava_novo"):
-
         url = f"{self.base_url}/chat/findChats/{instance_name}"
 
         response = requests.post(
@@ -241,16 +307,13 @@ class EvolutionAPIService:
 
         try:
             data = response.json()
-
         except Exception:
             data = []
 
         conversas = []
 
         if isinstance(data, list):
-
             for conversa in data:
-
                 remote_jid = conversa.get("remoteJid")
 
                 if not remote_jid:
@@ -298,19 +361,10 @@ class EvolutionAPIService:
                     unread_count = 0
 
                 conversa["nome_formatado"] = nome
-
-                conversa["numero_formatado"] = (
-                    self.formatar_numero(remote_jid)
-                )
-
-                conversa["hora_formatada"] = (
-                    self.formatar_timestamp(timestamp)
-                )
-
+                conversa["numero_formatado"] = self.formatar_numero(remote_jid)
+                conversa["hora_formatada"] = self.formatar_timestamp(timestamp)
                 conversa["ultima_mensagem"] = ultima_mensagem
-
                 conversa["timestamp"] = timestamp
-
                 conversa["unread_count"] = unread_count
 
                 conversas.append(conversa)
@@ -330,7 +384,6 @@ class EvolutionAPIService:
         }
 
     def buscar_mensagens(self, instance_name, remote_jid):
-
         url = f"{self.base_url}/chat/findMessages/{instance_name}"
 
         numero_base = (
@@ -354,7 +407,6 @@ class EvolutionAPIService:
         ids_vistos = set()
 
         for jid_teste in variacoes:
-
             payload = {
                 "where": {
                     "key": {
@@ -365,7 +417,6 @@ class EvolutionAPIService:
             }
 
             try:
-
                 response = requests.post(
                     url,
                     headers=self.headers,
@@ -385,23 +436,18 @@ class EvolutionAPIService:
                 mensagens = []
 
                 if isinstance(data, dict):
-
                     if isinstance(data.get("messages"), dict):
                         mensagens = (
                             data.get("messages", {}).get("records")
                             or data.get("messages", {}).get("rows")
                             or []
                         )
-
                     elif isinstance(data.get("messages"), list):
                         mensagens = data.get("messages")
-
                     elif isinstance(data.get("records"), list):
                         mensagens = data.get("records")
-
                     elif isinstance(data.get("data"), list):
                         mensagens = data.get("data")
-
                     elif isinstance(data.get("data"), dict):
                         mensagens = (
                             data.get("data", {}).get("records")
@@ -413,7 +459,6 @@ class EvolutionAPIService:
                     mensagens = data
 
                 for msg in mensagens:
-
                     if not isinstance(msg, dict):
                         continue
 
@@ -463,9 +508,7 @@ class EvolutionAPIService:
             "data": mensagens_unicas
         }
 
-
     def buscar_ultima_mensagem_por_chats(self, instance_name, remote_jid):
-
         url = f"{self.base_url}/chat/findChats/{instance_name}"
 
         response = requests.post(
@@ -501,7 +544,6 @@ class EvolutionAPIService:
             numero_busca_sem55 = numero_busca
 
         for conversa in data:
-
             if not isinstance(conversa, dict):
                 continue
 
@@ -549,7 +591,6 @@ class EvolutionAPIService:
             )
 
             if ultima_msg:
-
                 mensagens.append({
                     "key": {
                         "id": f"fallback-{conversa_jid}-{timestamp}",
@@ -566,7 +607,6 @@ class EvolutionAPIService:
         return mensagens
 
     def enviar_mensagem(self, instance_name, remote_jid, mensagem):
-
         url = f"{self.base_url}/message/sendText/{instance_name}"
 
         numero = remote_jid or ""
@@ -575,7 +615,6 @@ class EvolutionAPIService:
             numero = numero.replace("@s.whatsapp.net", "")
 
         if "@lid" in numero:
-
             return {
                 "ok": False,
                 "status_code": 400,
@@ -601,7 +640,6 @@ class EvolutionAPIService:
 
         try:
             data = response.json()
-
         except Exception:
             data = {"retorno": response.text}
 
@@ -618,7 +656,6 @@ class EvolutionAPIService:
         arquivo_path,
         legenda=None
     ):
-
         url = f"{self.base_url}/message/sendMedia/{instance_name}"
 
         numero = remote_jid or ""
@@ -627,7 +664,6 @@ class EvolutionAPIService:
             numero = numero.replace("@s.whatsapp.net", "")
 
         with open(arquivo_path, "rb") as arquivo:
-
             files = {
                 "medias": arquivo
             }
@@ -651,7 +687,6 @@ class EvolutionAPIService:
 
         try:
             retorno = response.json()
-
         except Exception:
             retorno = {
                 "retorno": response.text

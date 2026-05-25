@@ -254,6 +254,7 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
         if lead.usuario
         else "Sem vendedor"
     )
+
     return lead
 
 
@@ -281,33 +282,39 @@ def index():
             if acao == "criar":
                 resultado = service.criar_instancia(instance_name)
 
-                flash(
-                    "Instância criada com sucesso."
-                    if resultado["ok"]
-                    else "Não foi possível criar a instância.",
-                    "success" if resultado["ok"] else "warning"
+                qr_base64 = (
+                    resultado.get("qr_base64")
+                    or resultado.get("qr_code")
                 )
+
+                qr_code = qr_base64
+                pairing_code = resultado.get("pairing_code")
+
+                if resultado["ok"] and qr_base64:
+                    flash("Instância criada e QR Code gerado com sucesso.", "success")
+                elif resultado["ok"]:
+                    flash("Instância criada, mas a Evolution não retornou QR Code.", "warning")
+                else:
+                    flash("Não foi possível criar a instância.", "warning")
 
             elif acao == "conectar":
+                # Não usa /instance/connect porque no teu ambiente v2.2.3 retornou 404.
+                # Aqui repetimos o fluxo comprovado funcionando: /instance/create com qrcode=true.
                 resultado = service.conectar_qr(instance_name)
 
-                qr_base64 = None
-                qr_code = None
-                qr_code = (
-                    resultado.get("qr_code")
-                    or resultado.get("base64")
-                    or resultado.get("qrcode")
-                    or resultado.get("qr")
-                    or resultado.get("data", {}).get("base64")
-                    or resultado.get("data", {}).get("qrcode")
+                qr_base64 = (
+                    resultado.get("qr_base64")
+                    or resultado.get("qr_code")
                 )
+
+                qr_code = qr_base64
                 pairing_code = resultado.get("pairing_code")
 
                 flash(
                     "QR Code gerado com sucesso."
-                    if (qr_base64 or qr_code)
+                    if qr_base64
                     else "QR não retornado pela Evolution.",
-                    "success" if (qr_base64 or qr_code) else "warning"
+                    "success" if qr_base64 else "warning"
                 )
 
             elif acao == "status":
@@ -316,6 +323,8 @@ def index():
 
                 if status:
                     flash(f"Status: {status}", "info")
+                else:
+                    flash("Não foi possível consultar o status.", "warning")
 
             elif acao == "logout":
                 resultado = service.logout_instancia(instance_name)
@@ -515,23 +524,20 @@ def enviar_chat(jid):
         resultado = service.enviar_mensagem(instance_name, jid_envio, mensagem)
 
         if resultado["ok"]:
-            flash("Mensagem enviada com sucesso.", "success")
-        
-            if resultado["ok"]:
-                socketio.emit(
-                    "nova_mensagem_whatsapp",
-                    {
-                        "jid": jid,
-                        "mensagem": mensagem,
-                        "hora": datetime.now().strftime("%H:%M"),
-                        "from_me": True
-                    },
-                    room=jid
-                )
+            socketio.emit(
+                "nova_mensagem_whatsapp",
+                {
+                    "jid": jid,
+                    "mensagem": mensagem,
+                    "hora": datetime.now().strftime("%H:%M"),
+                    "from_me": True
+                },
+                room=jid
+            )
 
-                flash("Mensagem enviada com sucesso.", "success")
+            flash("Mensagem enviada com sucesso.", "success")
         else:
-            erro = resultado.get("erro") or "Erro ao enviar mensagem."
+            erro = resultado.get("erro") or resultado.get("data") or "Erro ao enviar mensagem."
 
             if "@lid" in jid and jid_envio == jid:
                 erro = (
@@ -616,7 +622,6 @@ def enviar_arquivo_chat(jid):
 @whatsapp_qr_bp.route("/chat_ajax/<path:jid>")
 @login_required
 def chat_ajax(jid):
-
     instance_name = (
         request.args.get("instance_name")
         or "mava_novo"
@@ -713,6 +718,7 @@ def salvar_lid():
             instance_name=instance_name
         )
     )
+
 
 @socketio.on("entrar_chat")
 def entrar_chat(data):
