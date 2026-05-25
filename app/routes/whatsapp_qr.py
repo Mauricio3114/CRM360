@@ -14,6 +14,16 @@ from app import db, socketio
 whatsapp_qr_bp = Blueprint("whatsapp_qr", __name__, url_prefix="/whatsapp-qr")
 
 
+def obter_instance_name():
+    empresa_id = getattr(current_user, "empresa_id", None)
+    user_id = getattr(current_user, "id", None)
+
+    if empresa_id:
+        return f"mava_empresa_{empresa_id}"
+
+    return f"mava_user_{user_id or 'local'}"
+
+
 def formatar_jid(jid):
     if not jid:
         return "Contato"
@@ -236,24 +246,9 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
     conversa["lead_id"] = lead.id
     conversa["lead_nome"] = lead.nome
     conversa["lead_telefone"] = lead.telefone
-
-    conversa["lead_pipeline"] = (
-        lead.pipeline.nome
-        if lead.pipeline
-        else "Sem etapa"
-    )
-
-    conversa["lead_tags"] = (
-        lead.lista_tags
-        if hasattr(lead, "lista_tags")
-        else []
-    )
-
-    conversa["lead_vendedor"] = (
-        lead.usuario.nome
-        if lead.usuario
-        else "Sem vendedor"
-    )
+    conversa["lead_pipeline"] = lead.pipeline.nome if lead.pipeline else "Sem etapa"
+    conversa["lead_tags"] = lead.lista_tags if hasattr(lead, "lista_tags") else []
+    conversa["lead_vendedor"] = lead.usuario.nome if lead.usuario else "Sem vendedor"
 
     return lead
 
@@ -262,12 +257,7 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
 @login_required
 def index():
     service = EvolutionAPIService()
-
-    instance_name = (
-        request.form.get("instance_name")
-        or request.args.get("instance_name")
-        or "mava_novo"
-    )
+    instance_name = obter_instance_name()
 
     resultado = None
     qr_base64 = None
@@ -275,54 +265,41 @@ def index():
     pairing_code = None
     status = None
 
+    try:
+        status_result = service.status_instancia(instance_name)
+        status = status_result.get("estado")
+    except Exception:
+        status = None
+
     if request.method == "POST":
         acao = request.form.get("acao")
 
         try:
-            if acao == "criar":
+            if acao == "gerar_qr":
                 resultado = service.criar_instancia(instance_name)
 
                 qr_base64 = (
                     resultado.get("qr_base64")
                     or resultado.get("qr_code")
+                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
                 )
 
                 qr_code = qr_base64
                 pairing_code = resultado.get("pairing_code")
 
                 if resultado["ok"] and qr_base64:
-                    flash("Instância criada e QR Code gerado com sucesso.", "success")
+                    flash("QR Code gerado com sucesso. Escaneie com seu WhatsApp.", "success")
                 elif resultado["ok"]:
-                    flash("Instância criada, mas a Evolution não retornou QR Code.", "warning")
+                    flash("A instância foi criada, mas o QR Code não foi retornado. Tente desconectar e gerar novamente.", "warning")
                 else:
-                    flash("Não foi possível criar a instância.", "warning")
-
-            elif acao == "conectar":
-                # Não usa /instance/connect porque no teu ambiente v2.2.3 retornou 404.
-                # Aqui repetimos o fluxo comprovado funcionando: /instance/create com qrcode=true.
-                resultado = service.conectar_qr(instance_name)
-
-                qr_base64 = (
-                    resultado.get("qr_base64")
-                    or resultado.get("qr_code")
-                )
-
-                qr_code = qr_base64
-                pairing_code = resultado.get("pairing_code")
-
-                flash(
-                    "QR Code gerado com sucesso."
-                    if qr_base64
-                    else "QR não retornado pela Evolution.",
-                    "success" if qr_base64 else "warning"
-                )
+                    flash("Não foi possível gerar o QR Code. Tente novamente.", "danger")
 
             elif acao == "status":
                 resultado = service.status_instancia(instance_name)
                 status = resultado.get("estado")
 
                 if status:
-                    flash(f"Status: {status}", "info")
+                    flash(f"Status do WhatsApp: {status}", "info")
                 else:
                     flash("Não foi possível consultar o status.", "warning")
 
@@ -330,27 +307,20 @@ def index():
                 resultado = service.logout_instancia(instance_name)
 
                 flash(
-                    "WhatsApp desconectado."
+                    "WhatsApp desconectado com sucesso."
                     if resultado["ok"]
-                    else "Erro ao desconectar.",
+                    else "Não foi possível desconectar o WhatsApp.",
                     "success" if resultado["ok"] else "warning"
                 )
 
-        except Exception as e:
-            resultado = {"erro": str(e)}
-            flash(f"Erro: {e}", "danger")
+                status = None
 
-    else:
-        try:
-            status_result = service.status_instancia(instance_name)
-            status = status_result.get("estado")
-        except Exception:
-            status = None
+        except Exception as e:
+            flash(f"Erro ao processar WhatsApp: {e}", "danger")
 
     return render_template(
         "whatsapp_qr.html",
         instance_name=instance_name,
-        resultado=resultado,
         qr_base64=qr_base64,
         qr_code=qr_code,
         pairing_code=pairing_code,
@@ -363,7 +333,7 @@ def index():
 def conversas():
     service = EvolutionAPIService()
 
-    instance_name = request.args.get("instance_name") or "mava_novo"
+    instance_name = obter_instance_name()
     jid_ativo = request.args.get("jid")
     numero_param = request.args.get("numero", "").strip()
 
@@ -499,7 +469,7 @@ def conversas():
 @whatsapp_qr_bp.route("/chat/<path:jid>")
 @login_required
 def abrir_chat(jid):
-    instance_name = request.args.get("instance_name") or "mava_novo"
+    instance_name = obter_instance_name()
 
     return redirect(
         url_for(
@@ -515,7 +485,7 @@ def abrir_chat(jid):
 def enviar_chat(jid):
     service = EvolutionAPIService()
 
-    instance_name = request.args.get("instance_name") or "mava_novo"
+    instance_name = obter_instance_name()
     mensagem = request.form.get("mensagem")
 
     if mensagem:
@@ -564,7 +534,7 @@ def enviar_chat(jid):
 def enviar_arquivo_chat(jid):
     service = EvolutionAPIService()
 
-    instance_name = request.args.get("instance_name") or "mava_novo"
+    instance_name = obter_instance_name()
     legenda = request.form.get("legenda", "").strip()
     arquivo = request.files.get("arquivo")
 
@@ -622,10 +592,7 @@ def enviar_arquivo_chat(jid):
 @whatsapp_qr_bp.route("/chat_ajax/<path:jid>")
 @login_required
 def chat_ajax(jid):
-    instance_name = (
-        request.args.get("instance_name")
-        or "mava_novo"
-    )
+    instance_name = obter_instance_name()
 
     nome_contato = formatar_jid(jid)
 
@@ -673,7 +640,7 @@ def chat_ajax(jid):
 def salvar_lid():
     lid_jid = request.form.get("lid_jid")
     numero_real = request.form.get("numero_real")
-    instance_name = request.form.get("instance_name") or "mava_novo"
+    instance_name = obter_instance_name()
 
     if not lid_jid or not numero_real:
         flash("Informe o número corretamente.", "danger")
