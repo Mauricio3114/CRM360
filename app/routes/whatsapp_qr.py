@@ -276,23 +276,32 @@ def index():
 
         try:
             if acao == "gerar_qr":
-                resultado = service.criar_instancia(instance_name)
 
-                qr_base64 = (
-                    resultado.get("qr_base64")
-                    or resultado.get("qr_code")
-                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
-                )
+                try:
+                    resultado = service.criar_instancia(instance_name)
 
-                qr_code = qr_base64
-                pairing_code = resultado.get("pairing_code")
+                    qr_base64 = (
+                        resultado.get("qr_base64")
+                        or resultado.get("qr_code")
+                        or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                    )
 
-                if resultado["ok"] and qr_base64:
-                    flash("QR Code gerado com sucesso. Escaneie com seu WhatsApp.", "success")
-                elif resultado["ok"]:
-                    flash("A instância foi criada, mas o QR Code não foi retornado. Tente desconectar e gerar novamente.", "warning")
-                else:
-                    flash("Não foi possível gerar o QR Code. Tente novamente.", "danger")
+                    pairing_code = resultado.get("pairing_code")
+
+                    if qr_base64:
+                        flash("QR Code gerado com sucesso.", "success")
+
+                        return render_template(
+                            "whatsapp_qr.html",
+                            qr_base64=qr_base64,
+                            pairing_code=pairing_code,
+                            status="connecting"
+                        )
+
+                    flash(f"Evolution não retornou QR. Resultado: {resultado}", "warning")
+
+                except Exception as e:
+                    flash(f"Erro ao gerar QR: {e}", "danger")
 
             elif acao == "status":
                 resultado = service.status_instancia(instance_name)

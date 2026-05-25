@@ -223,6 +223,21 @@
             text-align: center;
         }
     }
+
+    .whats-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-width: 260px;
+    }
+
+    .whats-actions .btn {
+        width: 100%;
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 
 <div class="whats-page">
@@ -301,26 +316,28 @@
 
                     <form method="POST" class="d-grid gap-3 mt-3">
 
-                        <button type="submit"
-                                name="acao"
-                                value="gerar_qr"
-                                class="btn btn-green btn-premium">
-                            📲 Conectar WhatsApp
-                        </button>
+                        <div class="whats-actions mt-4">
+                            <button type="submit"
+                                    name="acao"
+                                    value="gerar_qr"
+                                    class="btn btn-success btn-whats">
+                                📲 Conectar WhatsApp
+                            </button>
 
-                        <button type="submit"
-                                name="acao"
-                                value="status"
-                                class="btn btn-dark-soft btn-premium">
-                            🔄 Verificar status
-                        </button>
+                            <button type="submit"
+                                    name="acao"
+                                    value="status"
+                                    class="btn btn-outline-info btn-whats">
+                                🔄 Verificar status
+                            </button>
 
-                        <button type="submit"
-                                name="acao"
-                                value="logout"
-                                class="btn btn-outline-danger btn-premium">
-                            ❌ Desconectar
-                        </button>
+                            <button type="submit"
+                                    name="acao"
+                                    value="logout"
+                                    class="btn btn-outline-danger btn-whats">
+                                ❌ Desconectar
+                            </button>
+                        </div>
 
                     </form>
 
