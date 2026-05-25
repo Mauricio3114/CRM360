@@ -257,7 +257,8 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
 @login_required
 def index():
     service = EvolutionAPIService()
-    instance_name = obter_instance_name()
+
+    instance_name = f"mava_empresa_{current_user.empresa_id or current_user.id}"
 
     resultado = None
     qr_base64 = None
@@ -275,38 +276,39 @@ def index():
         acao = request.form.get("acao")
 
         try:
+
             if acao == "gerar_qr":
 
-                try:
-                    resultado = service.criar_instancia(instance_name)
+                service.deletar_instancia(instance_name)
 
-                    flash(str(resultado), "warning")
+                resultado = service.criar_instancia(instance_name)
 
-                    qr_base64 = (
-                        resultado.get("qr_base64")
-                        or resultado.get("qr_code")
-                        or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                qr_base64 = (
+                    resultado.get("qr_base64")
+                    or resultado.get("qr_code")
+                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                )
+
+                pairing_code = resultado.get("pairing_code")
+
+                if qr_base64:
+                    return render_template(
+                        "whatsapp_qr.html",
+                        qr_base64=qr_base64,
+                        qr_code=qr_base64,
+                        pairing_code=pairing_code,
+                        status="connecting"
                     )
 
-                    pairing_code = resultado.get("pairing_code")
-
-                    if qr_base64:
-                        flash("QR Code gerado com sucesso.", "success")
-
-                        return render_template(
-                            "whatsapp_qr.html",
-                            qr_base64=qr_base64,
-                            pairing_code=pairing_code,
-                            status="connecting"
-                        )
-
-                    flash(f"Evolution não retornou QR. Resultado: {resultado}", "warning")
-
-                except Exception as e:
-                    flash(f"Erro ao gerar QR: {e}", "danger")
+                flash(
+                    "Não foi possível gerar o QR Code. Tente novamente.",
+                    "warning"
+                )
 
             elif acao == "status":
+
                 resultado = service.status_instancia(instance_name)
+
                 status = resultado.get("estado")
 
                 if status:
@@ -315,6 +317,7 @@ def index():
                     flash("Não foi possível consultar o status.", "warning")
 
             elif acao == "logout":
+
                 resultado = service.logout_instancia(instance_name)
 
                 flash(
