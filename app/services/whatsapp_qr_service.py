@@ -161,14 +161,15 @@ class EvolutionAPIService:
             "ok": response.status_code in [200, 201],
             "status_code": response.status_code,
             "data": data,
-            "qr_base64": qr_base64,
-            "qr_code": qr_base64,
+            "qr_base64": (
+                data.get("qrcode", {}).get("base64")
+                or data.get("base64")
+                or data.get("qr")
+                or data.get("qrCode")
+            ),
             "pairing_code": (
-                data.get("pairingCode")
-                or data.get("pairing_code")
-                or data.get("qrcode", {}).get("pairingCode")
-                if isinstance(data.get("qrcode"), dict)
-                else None
+                data.get("qrcode", {}).get("pairingCode")
+                or data.get("pairingCode")
             )
         }
 
