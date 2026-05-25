@@ -152,6 +152,8 @@ class EvolutionAPIService:
 
         try:
             data = response.json()
+
+            print("RETORNO EVOLUTION:", data, flush=True)
         except Exception:
             data = {"erro": response.text}
 
