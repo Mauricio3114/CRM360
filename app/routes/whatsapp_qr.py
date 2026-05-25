@@ -279,7 +279,7 @@ def index():
 
             if acao == "gerar_qr":
 
-                service.deletar_instancia(instance_name)
+                instance_name = f"mava_empresa_{current_user.empresa_id or current_user.id}_{int(datetime.utcnow().timestamp())}"
 
                 resultado = service.criar_instancia(instance_name)
 
@@ -294,16 +294,14 @@ def index():
                 if qr_base64:
                     return render_template(
                         "whatsapp_qr.html",
+                        instance_name=instance_name,
                         qr_base64=qr_base64,
                         qr_code=qr_base64,
                         pairing_code=pairing_code,
-                        status="connecting"
+                        status="connecting",
                     )
 
-                flash(
-                    "Não foi possível gerar o QR Code. Tente novamente.",
-                    "warning"
-                )
+                flash("Não foi possível gerar o QR Code. Tente novamente.", "warning")
 
             elif acao == "status":
 
