@@ -281,12 +281,15 @@ def index():
 
                 instance_name = f"mava_empresa_{current_user.empresa_id or current_user.id}_{int(datetime.utcnow().timestamp())}"
 
-                resultado = service.criar_instancia(instance_name)
+                resultado = service.conectar_qr(instance_name)
 
                 qr_base64 = (
                     resultado.get("qr_base64")
                     or resultado.get("qr_code")
                     or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                    or resultado.get("data", {}).get("base64")
+                    or resultado.get("data", {}).get("qr")
+                    or resultado.get("data", {}).get("qrCode")
                 )
 
                 pairing_code = resultado.get("pairing_code")
@@ -302,8 +305,7 @@ def index():
                     )
 
                 flash("Não foi possível gerar o QR Code. Tente novamente.", "warning")
-
-            elif acao == "status":
+                        elif acao == "status":
 
                 resultado = service.status_instancia(instance_name)
 
