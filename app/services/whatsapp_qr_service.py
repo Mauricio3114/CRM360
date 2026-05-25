@@ -154,21 +154,28 @@ class EvolutionAPIService:
             data = response.json()
 
             print("RETORNO EVOLUTION:", data, flush=True)
+
         except Exception:
             data = {"erro": response.text}
 
-        qr_base64 = self.extrair_qr_base64(data)
+        qr_base64 = (
+            data.get("qrcode", {}).get("base64")
+            or data.get("base64")
+            or data.get("qr")
+            or data.get("qrCode")
+        )
+
+        print(
+            "QR EXTRAIDO:",
+            qr_base64[:100] if qr_base64 else "NENHUM",
+            flush=True
+        )
 
         return {
             "ok": response.status_code in [200, 201],
             "status_code": response.status_code,
             "data": data,
-            "qr_base64": (
-                data.get("qrcode", {}).get("base64")
-                or data.get("base64")
-                or data.get("qr")
-                or data.get("qrCode")
-            ),
+            "qr_base64": qr_base64,
             "pairing_code": (
                 data.get("qrcode", {}).get("pairingCode")
                 or data.get("pairingCode")
