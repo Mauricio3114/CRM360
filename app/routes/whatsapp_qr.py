@@ -280,6 +280,8 @@ def index():
                 try:
                     resultado = service.criar_instancia(instance_name)
 
+                    flash(str(resultado), "warning")
+
                     qr_base64 = (
                         resultado.get("qr_base64")
                         or resultado.get("qr_code")
