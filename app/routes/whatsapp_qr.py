@@ -278,7 +278,8 @@ def index():
 
         try:
             if acao == "gerar_qr":
-                instance_name = f"{obter_instance_name()}_{int(datetime.utcnow().timestamp())}"
+
+                instance_name = obter_instance_name()
 
                 resultado = service.conectar_qr(instance_name)
 
