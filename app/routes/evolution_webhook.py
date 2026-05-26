@@ -167,3 +167,21 @@ def receber():
     db.session.commit()
 
     return jsonify({"ok": True})
+
+
+@evolution_webhook_bp.route("/qrcode-updated", methods=["POST"])
+def qrcode_updated():
+    payload = request.get_json(silent=True) or {}
+
+    print("WEBHOOK QR RECEBIDO:", payload, flush=True)
+
+    return jsonify({"ok": True, "evento": "qrcode.updated"}), 200
+
+
+@evolution_webhook_bp.route("/connection-update", methods=["POST"])
+def connection_update():
+    payload = request.get_json(silent=True) or {}
+
+    print("WEBHOOK CONEXAO RECEBIDO:", payload, flush=True)
+
+    return jsonify({"ok": True, "evento": "connection.update"}), 200
