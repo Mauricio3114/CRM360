@@ -265,7 +265,7 @@ def detalhe(lead_id):
     return render_template(
         "lead_detalhe.html",
         lead=lead,
-        interacoes=interacoes
+        interacoes=interacoes,
         instance_name=instance_name,
     )
 
