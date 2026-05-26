@@ -272,33 +272,54 @@ def index():
 
         try:
 
-            if acao == "gerar_qr":
+           if acao == "gerar_qr":
 
-                service.deletar_instancia(instance_name)
+                resultado_status = service.status_instancia(instance_name)
+                estado = str(resultado_status.get("estado", "")).lower()
 
-                resultado = service.conectar_qr(instance_name)
+                print("STATUS ATUAL:", estado, flush=True)
 
-                qr_base64 = (
-                    resultado.get("qr_base64")
-                    or resultado.get("qr_code")
-                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
-                    or resultado.get("data", {}).get("base64")
-                )
+                if estado in ["open", "connecting"]:
+                    flash("WhatsApp já está conectado ou conectando.", "info")
 
-                qr_code = qr_base64
-                pairing_code = resultado.get("pairing_code")
+                else:
+                    try:
+                        service.deletar_instancia(instance_name)
+                    except:
+                        pass
 
-                if qr_base64:
-                    return render_template(
-                        "whatsapp_qr.html",
-                        instance_name=instance_name,
-                        qr_base64=qr_base64,
-                        qr_code=qr_code,
-                        pairing_code=pairing_code,
-                        status="connecting",
+                    resultado = service.conectar_qr(instance_name)
+
+                    print("RETORNO EVOLUTION:", resultado, flush=True)
+
+                    qr_base64 = (
+                        resultado.get("qr_base64")
+                        or resultado.get("qr_code")
+                        or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                        or resultado.get("data", {}).get("base64")
+                        or resultado.get("qrcode", {}).get("base64")
                     )
 
-                flash("Não foi possível gerar o QR Code.", "warning")
+                    print(
+                        "QR EXTRAIDO:",
+                        "OK" if qr_base64 else "NENHUM",
+                        flush=True
+                    )
+
+                    qr_code = qr_base64
+
+                    if qr_base64:
+
+                        return render_template(
+                            "whatsapp_qr.html",
+                            instance_name=instance_name,
+                            qr_base64=qr_base64,
+                            qr_code=qr_code,
+                            pairing_code=None,
+                            status="connecting",
+                        )
+
+                    flash("Não foi possível gerar o QR Code.", "warning")
 
             elif acao == "status":
 
