@@ -258,9 +258,8 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
 def index():
     service = EvolutionAPIService()
 
-    instance_name = f"mava_empresa_{current_user.empresa_id or current_user.id}"
+    instance_name = obter_instance_name()
 
-    resultado = None
     qr_base64 = None
     qr_code = None
     pairing_code = None
@@ -276,10 +275,8 @@ def index():
         acao = request.form.get("acao")
 
         try:
-
             if acao == "gerar_qr":
-
-                instance_name = f"mava_empresa_{current_user.empresa_id or current_user.id}_{int(datetime.utcnow().timestamp())}"
+                instance_name = f"{obter_instance_name()}_{int(datetime.utcnow().timestamp())}"
 
                 resultado = service.conectar_qr(instance_name)
 
@@ -305,10 +302,9 @@ def index():
                     )
 
                 flash("Não foi possível gerar o QR Code. Tente novamente.", "warning")
-                        elif acao == "status":
 
+            elif acao == "status":
                 resultado = service.status_instancia(instance_name)
-
                 status = resultado.get("estado")
 
                 if status:
@@ -317,7 +313,6 @@ def index():
                     flash("Não foi possível consultar o status.", "warning")
 
             elif acao == "logout":
-
                 resultado = service.logout_instancia(instance_name)
 
                 flash(
