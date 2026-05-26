@@ -185,48 +185,48 @@ class EvolutionAPIService:
 
     def conectar_qr(self, instance_name="mava_novo"):
 
-    import time
+        import time
 
-    # cria instância
-    self.criar_instancia(instance_name)
+        # cria instância
+        self.criar_instancia(instance_name)
 
-    time.sleep(5)
+        time.sleep(5)
 
-    url = f"{self.base_url}/instance/connect/{instance_name}"
+        url = f"{self.base_url}/instance/connect/{instance_name}"
 
-    response = requests.get(
-        url,
-        headers=self.headers,
-        timeout=60
-    )
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=60
+        )
 
-    try:
-        data = response.json()
+        try:
+            data = response.json()
 
-        print("CONNECT RETORNO:", data, flush=True)
+            print("CONNECT RETORNO:", data, flush=True)
 
-    except Exception:
-        data = {"erro": response.text}
+        except Exception:
+            data = {"erro": response.text}
 
-    qr_base64 = (
-        data.get("base64")
-        or data.get("qrcode", {}).get("base64")
-        or data.get("code")
-        or data.get("qr")
-        or data.get("qrCode")
-    )
+        qr_base64 = (
+            data.get("base64")
+            or data.get("qrcode", {}).get("base64")
+            or data.get("code")
+            or data.get("qr")
+            or data.get("qrCode")
+        )
 
-    print(
-        "QR CONNECT EXTRAIDO:",
-        qr_base64[:100] if qr_base64 else "NENHUM",
-        flush=True
-    )
+        print(
+            "QR CONNECT EXTRAIDO:",
+            qr_base64[:100] if qr_base64 else "NENHUM",
+            flush=True
+        )
 
-    return {
-        "ok": response.status_code in [200, 201],
-        "data": data,
-        "qr_base64": qr_base64
-    }
+        return {
+            "ok": response.status_code in [200, 201],
+            "data": data,
+            "qr_base64": qr_base64
+        }
 
     def status_instancia(self, instance_name="mava_novo"):
         urls = [
