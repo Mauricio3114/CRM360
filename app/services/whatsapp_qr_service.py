@@ -185,47 +185,48 @@ class EvolutionAPIService:
 
     def conectar_qr(self, instance_name="mava_novo"):
 
-        # cria instância
-        self.criar_instancia(instance_name)
+    import time
 
-        time.sleep(3)
+    # cria instância
+    self.criar_instancia(instance_name)
 
-        # tenta buscar QR
-        url = f"{self.base_url}/instance/connect/{instance_name}"
+    time.sleep(5)
 
-        response = requests.get(
-            url,
-            headers=self.headers,
-            timeout=60
-        )
+    url = f"{self.base_url}/instance/connect/{instance_name}"
 
-        try:
-            data = response.json()
+    response = requests.get(
+        url,
+        headers=self.headers,
+        timeout=60
+    )
 
-            print("CONNECT RETORNO:", data, flush=True)
+    try:
+        data = response.json()
 
-        except Exception:
-            data = {"erro": response.text}
+        print("CONNECT RETORNO:", data, flush=True)
 
-        qr_base64 = (
-            data.get("base64")
-            or data.get("qrcode", {}).get("base64")
-            or data.get("qr")
-            or data.get("qrCode")
-        )
+    except Exception:
+        data = {"erro": response.text}
 
-        print(
-            "QR CONNECT EXTRAIDO:",
-            qr_base64[:100] if qr_base64 else "NENHUM",
-            flush=True
-        )
+    qr_base64 = (
+        data.get("base64")
+        or data.get("qrcode", {}).get("base64")
+        or data.get("code")
+        or data.get("qr")
+        or data.get("qrCode")
+    )
 
-        return {
-            "ok": response.status_code in [200, 201],
-            "status_code": response.status_code,
-            "data": data,
-            "qr_base64": qr_base64
-        }
+    print(
+        "QR CONNECT EXTRAIDO:",
+        qr_base64[:100] if qr_base64 else "NENHUM",
+        flush=True
+    )
+
+    return {
+        "ok": response.status_code in [200, 201],
+        "data": data,
+        "qr_base64": qr_base64
+    }
 
     def status_instancia(self, instance_name="mava_novo"):
         urls = [
