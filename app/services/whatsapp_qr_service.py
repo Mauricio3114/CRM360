@@ -151,6 +151,9 @@ class EvolutionAPIService:
             timeout=60
         )
 
+        print("STATUS CODE:", response.status_code, flush=True)
+        print("RESPONSE TEXT:", response.text, flush=True)
+
         try:
             data = response.json()
 
@@ -176,57 +179,14 @@ class EvolutionAPIService:
             "ok": response.status_code in [200, 201],
             "status_code": response.status_code,
             "data": data,
-            "qr_base64": qr_base64,
-            "pairing_code": (
-                data.get("qrcode", {}).get("pairingCode")
-                or data.get("pairingCode")
+            "qr_base64": (
+                data.get("qrcode", {}).get("base64")
+                or data.get("base64")
             )
         }
 
     def conectar_qr(self, instance_name="mava_novo"):
-
-        import time
-
-        # cria instância
-        self.criar_instancia(instance_name)
-
-        time.sleep(5)
-
-        url = f"{self.base_url}/instance/connect/{instance_name}"
-
-        response = requests.get(
-            url,
-            headers=self.headers,
-            timeout=60
-        )
-
-        try:
-            data = response.json()
-
-            print("CONNECT RETORNO:", data, flush=True)
-
-        except Exception:
-            data = {"erro": response.text}
-
-        qr_base64 = (
-            data.get("base64")
-            or data.get("qrcode", {}).get("base64")
-            or data.get("code")
-            or data.get("qr")
-            or data.get("qrCode")
-        )
-
-        print(
-            "QR CONNECT EXTRAIDO:",
-            qr_base64[:100] if qr_base64 else "NENHUM",
-            flush=True
-        )
-
-        return {
-            "ok": response.status_code in [200, 201],
-            "data": data,
-            "qr_base64": qr_base64
-        }
+        return self.criar_instancia(instance_name)
 
     def status_instancia(self, instance_name="mava_novo"):
         urls = [
