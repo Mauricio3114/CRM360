@@ -17,13 +17,7 @@ whatsapp_qr_bp = Blueprint("whatsapp_qr", __name__, url_prefix="/whatsapp-qr")
 
 
 def obter_instance_name():
-    empresa_id = getattr(current_user, "empresa_id", None)
-    user_id = getattr(current_user, "id", None)
-
-    if empresa_id:
-        return f"mava_empresa_teste_{empresa_id}"
-
-    return f"mava_user_{user_id or 'local'}"
+    return "mava_empresa_teste_3"
 
 
 def formatar_jid(jid):
