@@ -135,7 +135,7 @@ class EvolutionAPIService:
 
         return ""
 
-    def criar_instancia(self, instance_name="mava_novo"):
+    def criar_instancia(self, instance_name="mava_empresa_teste_3"):
         url = f"{self.base_url}/instance/create"
 
         payload = {
@@ -185,10 +185,10 @@ class EvolutionAPIService:
             )
         }
 
-    def conectar_qr(self, instance_name="mava_novo"):
+    def conectar_qr(self, instance_name="mava_empresa_teste_3"):
         return self.criar_instancia(instance_name)
 
-    def status_instancia(self, instance_name="mava_novo"):
+    def status_instancia(self, instance_name="mava_empresa_teste_3"):
         urls = [
             f"{self.base_url}/instance/connectionState/{instance_name}",
             f"{self.base_url}/instance/fetchInstances"
@@ -247,7 +247,7 @@ class EvolutionAPIService:
             "estado": None
         }
 
-    def logout_instancia(self, instance_name="mava_novo"):
+    def logout_instancia(self, instance_name="mava_empresa_teste_3"):
         urls = [
             f"{self.base_url}/instance/logout/{instance_name}",
             f"{self.base_url}/instance/delete/{instance_name}"
@@ -286,7 +286,7 @@ class EvolutionAPIService:
             "data": ultimo_retorno
         }
 
-    def deletar_instancia(self, instance_name="mava_novo"):
+    def deletar_instancia(self, instance_name="mava_empresa_teste_3"):
         url = f"{self.base_url}/instance/delete/{instance_name}"
 
         response = requests.delete(
@@ -306,7 +306,7 @@ class EvolutionAPIService:
             "data": data
         }
 
-    def buscar_conversas(self, instance_name="mava_novo"):
+    def buscar_conversas(self, instance_name="mava_empresa_teste_3"):
         url = f"{self.base_url}/chat/findChats/{instance_name}"
 
         response = requests.post(

@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import time
 
 
-INSTANCE_NAME = "mava_novo"
+INSTANCE_NAME = "mava_empresa_teste_3"
 TZ = ZoneInfo("America/Fortaleza")
 
 app = create_app()
