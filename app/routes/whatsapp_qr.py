@@ -296,11 +296,6 @@ def index():
 
                 else:
 
-                    try:
-                        service.deletar_instancia(instance_name)
-                    except:
-                        pass
-
                     resultado = service.conectar_qr(
                         instance_name
                     )
