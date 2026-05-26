@@ -21,7 +21,7 @@ def obter_instance_name():
     user_id = getattr(current_user, "id", None)
 
     if empresa_id:
-        return f"mava_empresa_{empresa_id}"
+        return f"mava_empresa_teste_{empresa_id}"
 
     return f"mava_user_{user_id or 'local'}"
 
@@ -282,19 +282,25 @@ def index():
 
                 instance_name = obter_instance_name()
 
-                resultado = service.conectar_qr(instance_name)
+                resultado = service.criar_instancia(instance_name)
 
-                qr_base64 = resultado.get("qr_base64")
+                qr_base64 = (
+                    resultado.get("qr_base64")
+                    or resultado.get("qr_code")
+                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
+                    or resultado.get("data", {}).get("base64")
+                )
+
                 qr_code = qr_base64
+                pairing_code = resultado.get("pairing_code")
 
                 if qr_base64:
-
                     return render_template(
                         "whatsapp_qr.html",
                         instance_name=instance_name,
                         qr_base64=qr_base64,
                         qr_code=qr_code,
-                        pairing_code=None,
+                        pairing_code=pairing_code,
                         status="connecting",
                     )
 
