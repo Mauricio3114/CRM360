@@ -277,48 +277,37 @@ def index():
         acao = request.form.get("acao")
 
         try:
+
             if acao == "gerar_qr":
 
                 instance_name = obter_instance_name()
 
-                resultado = service.conectar_qr(instance_name)
+                service.conectar_qr(instance_name)
 
-                qr_base64 = (
-                    resultado.get("qr_base64")
-                    or buscar_qr(instance_name)
+                flash(
+                    "QR Code solicitado. Aguarde alguns segundos e clique em verificar status.",
+                    "info"
                 )
 
-                for _ in range(6):
-                    if qr_base64:
-                        break
-
-                    time.sleep(1)
-                    qr_base64 = buscar_qr(instance_name)
-
-                pairing_code = resultado.get("pairing_code")
-
-                if qr_base64:
-                    return render_template(
-                        "whatsapp_qr.html",
-                        instance_name=instance_name,
-                        qr_base64=qr_base64,
-                        qr_code=qr_base64,
-                        pairing_code=pairing_code,
-                        status="connecting",
-                    )
-
-                flash("Não foi possível gerar o QR Code. Tente novamente.", "warning")
+                return redirect(
+                    url_for("whatsapp_qr.index")
+                )
 
             elif acao == "status":
+
                 resultado = service.status_instancia(instance_name)
                 status = resultado.get("estado")
 
                 if status:
                     flash(f"Status do WhatsApp: {status}", "info")
                 else:
-                    flash("Não foi possível consultar o status.", "warning")
+                    flash(
+                        "Não foi possível consultar o status.",
+                        "warning"
+                    )
 
             elif acao == "logout":
+
                 resultado = service.logout_instancia(instance_name)
 
                 flash(
@@ -332,6 +321,9 @@ def index():
 
         except Exception as e:
             flash(f"Erro ao processar WhatsApp: {e}", "danger")
+
+    qr_base64 = buscar_qr(instance_name)
+    qr_code = qr_base64
 
     return render_template(
         "whatsapp_qr.html",
