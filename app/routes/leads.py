@@ -260,10 +260,13 @@ def detalhe(lead_id):
         empresa_id=current_user.empresa_id
     ).order_by(Interacao.criado_em.desc()).all()
 
+    instance_name = "mava_empresa_teste_3"
+
     return render_template(
         "lead_detalhe.html",
         lead=lead,
         interacoes=interacoes
+        instance_name=instance_name,
     )
 
 
