@@ -413,7 +413,7 @@
                     </div>
 
                     <iframe
-                        src="{{ url_for('whatsapp_qr.chat_ajax', jid=jid_whatsapp) }}?instance_name=mava_novo"
+                        src="{{ url_for('whatsapp_qr.chat_ajax', jid=jid_whatsapp) }}?instance_name={{ instance_name }}"
                         style="
                             width:100%;
                             height:720px;
