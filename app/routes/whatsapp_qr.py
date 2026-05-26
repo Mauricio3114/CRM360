@@ -282,16 +282,23 @@ def index():
 
                 instance_name = obter_instance_name()
 
-                service.conectar_qr(instance_name)
+                resultado = service.conectar_qr(instance_name)
 
-                flash(
-                    "QR Code solicitado. Aguarde alguns segundos e clique em verificar status.",
-                    "info"
-                )
+                qr_base64 = resultado.get("qr_base64")
+                qr_code = qr_base64
 
-                return redirect(
-                    url_for("whatsapp_qr.index")
-                )
+                if qr_base64:
+
+                    return render_template(
+                        "whatsapp_qr.html",
+                        instance_name=instance_name,
+                        qr_base64=qr_base64,
+                        qr_code=qr_code,
+                        pairing_code=None,
+                        status="connecting",
+                    )
+
+                flash("Não foi possível gerar o QR Code.", "warning")
 
             elif acao == "status":
 
