@@ -1,4 +1,6 @@
 import os
+import time
+from app.services.whatsapp_qr_cache import buscar_qr
 from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
@@ -282,12 +284,15 @@ def index():
 
                 qr_base64 = (
                     resultado.get("qr_base64")
-                    or resultado.get("qr_code")
-                    or resultado.get("data", {}).get("qrcode", {}).get("base64")
-                    or resultado.get("data", {}).get("base64")
-                    or resultado.get("data", {}).get("qr")
-                    or resultado.get("data", {}).get("qrCode")
+                    or buscar_qr(instance_name)
                 )
+
+                for _ in range(6):
+                    if qr_base64:
+                        break
+
+                    time.sleep(1)
+                    qr_base64 = buscar_qr(instance_name)
 
                 pairing_code = resultado.get("pairing_code")
 

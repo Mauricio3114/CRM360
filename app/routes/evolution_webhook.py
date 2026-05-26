@@ -8,6 +8,8 @@ from app.models.lead import Lead
 from app.models.pipeline import Pipeline
 from app.models.mensagem_whatsapp import MensagemWhatsApp
 
+from app.services.whatsapp_qr_cache import salvar_qr
+
 
 evolution_webhook_bp = Blueprint(
     "evolution_webhook",
@@ -173,9 +175,22 @@ def receber():
 def qrcode_updated():
     payload = request.get_json(silent=True) or {}
 
-    print("WEBHOOK QR RECEBIDO:", payload, flush=True)
+    dados = payload.get("data") or {}
+    qrcode = dados.get("qrcode") or {}
 
-    return jsonify({"ok": True, "evento": "qrcode.updated"}), 200
+    instance_name = (
+        qrcode.get("instance")
+        or payload.get("instance")
+        or dados.get("instance")
+    )
+
+    qr_base64 = qrcode.get("base64")
+
+    salvar_qr(instance_name, qr_base64)
+
+    print("WEBHOOK QR SALVO:", instance_name, bool(qr_base64), flush=True)
+
+    return jsonify({"ok": True}), 200
 
 
 @evolution_webhook_bp.route("/connection-update", methods=["POST"])
