@@ -252,6 +252,7 @@ def sincronizar_conversa_com_lead(conversa, instance_name):
 @whatsapp_qr_bp.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+
     service = EvolutionAPIService()
 
     instance_name = obter_instance_name()
@@ -268,36 +269,58 @@ def index():
         status = None
 
     if request.method == "POST":
+
         acao = request.form.get("acao")
 
         try:
 
-           if acao == "gerar_qr":
+            if acao == "gerar_qr":
 
                 resultado_status = service.status_instancia(instance_name)
-                estado = str(resultado_status.get("estado", "")).lower()
+                estado = str(
+                    resultado_status.get("estado", "")
+                ).lower()
 
-                print("STATUS ATUAL:", estado, flush=True)
+                print(
+                    "STATUS ATUAL:",
+                    estado,
+                    flush=True
+                )
 
                 if estado in ["open", "connecting"]:
-                    flash("WhatsApp já está conectado ou conectando.", "info")
+
+                    flash(
+                        "WhatsApp já está conectado ou conectando.",
+                        "info"
+                    )
 
                 else:
+
                     try:
                         service.deletar_instancia(instance_name)
                     except:
                         pass
 
-                    resultado = service.conectar_qr(instance_name)
+                    resultado = service.conectar_qr(
+                        instance_name
+                    )
 
-                    print("RETORNO EVOLUTION:", resultado, flush=True)
+                    print(
+                        "RETORNO EVOLUTION:",
+                        resultado,
+                        flush=True
+                    )
 
                     qr_base64 = (
                         resultado.get("qr_base64")
                         or resultado.get("qr_code")
-                        or resultado.get("data", {}).get("qrcode", {}).get("base64")
-                        or resultado.get("data", {}).get("base64")
-                        or resultado.get("qrcode", {}).get("base64")
+                        or resultado.get("data", {})
+                        .get("qrcode", {})
+                        .get("base64")
+                        or resultado.get("data", {})
+                        .get("base64")
+                        or resultado.get("qrcode", {})
+                        .get("base64")
                     )
 
                     print(
@@ -319,16 +342,28 @@ def index():
                             status="connecting",
                         )
 
-                    flash("Não foi possível gerar o QR Code.", "warning")
+                    flash(
+                        "Não foi possível gerar o QR Code.",
+                        "warning"
+                    )
 
             elif acao == "status":
 
-                resultado = service.status_instancia(instance_name)
+                resultado = service.status_instancia(
+                    instance_name
+                )
+
                 status = resultado.get("estado")
 
                 if status:
-                    flash(f"Status do WhatsApp: {status}", "info")
+
+                    flash(
+                        f"Status do WhatsApp: {status}",
+                        "info"
+                    )
+
                 else:
+
                     flash(
                         "Não foi possível consultar o status.",
                         "warning"
@@ -336,19 +371,27 @@ def index():
 
             elif acao == "logout":
 
-                resultado = service.logout_instancia(instance_name)
+                resultado = service.logout_instancia(
+                    instance_name
+                )
 
                 flash(
-                    "WhatsApp desconectado com sucesso."
-                    if resultado["ok"]
-                    else "Não foi possível desconectar o WhatsApp.",
+                    (
+                        "WhatsApp desconectado com sucesso."
+                        if resultado["ok"]
+                        else "Não foi possível desconectar o WhatsApp."
+                    ),
                     "success" if resultado["ok"] else "warning"
                 )
 
                 status = None
 
         except Exception as e:
-            flash(f"Erro ao processar WhatsApp: {e}", "danger")
+
+            flash(
+                f"Erro ao processar WhatsApp: {e}",
+                "danger"
+            )
 
     qr_base64 = buscar_qr(instance_name)
     qr_code = qr_base64
