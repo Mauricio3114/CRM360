@@ -280,9 +280,9 @@ def index():
 
             if acao == "gerar_qr":
 
-                instance_name = obter_instance_name()
+                service.deletar_instancia(instance_name)
 
-                resultado = service.criar_instancia(instance_name)
+                resultado = service.conectar_qr(instance_name)
 
                 qr_base64 = (
                     resultado.get("qr_base64")
