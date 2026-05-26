@@ -93,6 +93,7 @@ def obter_entrada_whatsapp(empresa_id):
     return etapa
 
 
+@evolution_webhook_bp.route("", methods=["POST"])
 @evolution_webhook_bp.route("/", methods=["POST"])
 def receber():
 
@@ -104,6 +105,8 @@ def receber():
 
     dados = payload.get("data") or payload
 
+    print("DADOS RECEBIDOS:", dados, flush=True)
+
     key = dados.get("key") or {}
     remote_jid = key.get("remoteJid") or dados.get("remoteJid") or ""
     from_me = key.get("fromMe", False)
@@ -111,15 +114,25 @@ def receber():
     message = dados.get("message") or {}
     texto = extrair_texto(message)
 
+    print("REMOTE_JID:", remote_jid, flush=True)
+    print("TEXTO EXTRAIDO:", texto, flush=True)
+    print("FROM_ME:", from_me, flush=True)
+
     if not remote_jid or "@g.us" in remote_jid:
+        print("WEBHOOK IGNORADO: sem remote_jid ou grupo", flush=True)
         return jsonify({"ok": True, "ignorado": "sem remote_jid ou grupo"})
 
     telefone = limpar_numero(remote_jid)
 
+    print("TELEFONE:", telefone, flush=True)
+
     if not telefone:
+        print("WEBHOOK IGNORADO: telefone vazio", flush=True)
         return jsonify({"ok": True, "ignorado": "telefone vazio"})
 
     empresa_id = obter_empresa_id()
+
+    print("EMPRESA_ID:", empresa_id, flush=True)
 
     lead = Lead.query.filter_by(
         empresa_id=empresa_id,
@@ -127,6 +140,8 @@ def receber():
     ).first()
 
     if not lead:
+        print("LEAD NÃO ENCONTRADO. CRIANDO NOVO LEAD.", flush=True)
+
         etapa = obter_entrada_whatsapp(empresa_id)
 
         lead = Lead(
@@ -148,6 +163,11 @@ def receber():
         db.session.add(lead)
         db.session.commit()
 
+        print("NOVO LEAD CRIADO:", lead.id, flush=True)
+
+    else:
+        print("LEAD ENCONTRADO:", lead.id, flush=True)
+
     if not texto:
         texto = "Mensagem recebida"
 
@@ -167,6 +187,8 @@ def receber():
 
     db.session.add(mensagem)
     db.session.commit()
+
+    print("MENSAGEM WHATSAPP SALVA:", mensagem.id, flush=True)
 
     return jsonify({"ok": True})
 
