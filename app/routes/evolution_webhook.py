@@ -103,7 +103,18 @@ def receber():
 
     print("PAYLOAD WEBHOOK:", payload, flush=True)
 
+    # ✅ FIX 1: ignora eventos que não são messages.upsert
+    evento = payload.get("event", "")
+    if evento != "messages.upsert":
+        print(f"WEBHOOK IGNORADO: evento={evento}", flush=True)
+        return jsonify({"ok": True, "ignorado": f"evento={evento}"})
+
     dados = payload.get("data") or payload
+
+    # ✅ FIX 2: se data vier como lista, ignora (contacts.update, sync, etc)
+    if isinstance(dados, list):
+        print("WEBHOOK IGNORADO: data é lista", flush=True)
+        return jsonify({"ok": True, "ignorado": "data lista"})
 
     print("DADOS RECEBIDOS:", dados, flush=True)
 

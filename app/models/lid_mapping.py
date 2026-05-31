@@ -9,7 +9,7 @@ class LidMapping(db.Model):
 
     empresa_id = db.Column(db.Integer, db.ForeignKey("empresas.id"), nullable=True)
 
-    instance_name = db.Column(db.String(100), nullable=False, default="mava_novo")
+    instance_name = db.Column(db.String(100), nullable=False, default="mava_empresa_teste_3")
 
     lid_jid = db.Column(db.String(150), nullable=False, index=True)
     numero_real = db.Column(db.String(30), nullable=False)
