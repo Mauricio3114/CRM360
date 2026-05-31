@@ -7,6 +7,7 @@ from app import db
 from app.models.lead import Lead
 from app.models.pipeline import Pipeline
 from app.models.mensagem_whatsapp import MensagemWhatsApp
+from app.models.lid_mapping import LidMapping
 
 from app.services.whatsapp_qr_cache import salvar_qr
 
@@ -133,78 +134,106 @@ def receber():
         print("WEBHOOK IGNORADO: sem remote_jid ou grupo", flush=True)
         return jsonify({"ok": True, "ignorado": "sem remote_jid ou grupo"})
 
-    # ✅ FIX @lid: se remoteJid for @lid, usa o sender do payload como telefone
-    # sender = número da instância conectada (quem enviou/recebeu)
-    # para fromMe=True: o destinatário é o @lid → usa pushName ou ignora
-    # para fromMe=False: quem mandou é o @lid → tenta buscar pelo pushName no banco
+    empresa_id = obter_empresa_id()
+
+    # ✅ Tratamento de @lid
     if "@lid" in remote_jid:
         if from_me:
-            # mensagem enviada por nós para um @lid — ignora, já foi salva pelo envio
             print("WEBHOOK IGNORADO: fromMe=True com @lid", flush=True)
             return jsonify({"ok": True, "ignorado": "fromMe lid"})
+
+        push_name = dados.get("pushName") or ""
+        instance_name = payload.get("instance", "")
+
+        print(f"REMOTE_JID é @lid, pushName={push_name}", flush=True)
+
+        # 1. Tenta resolver pelo LidMapping
+        mapping = LidMapping.query.filter_by(
+            lid_jid=remote_jid,
+            instance_name=instance_name
+        ).first()
+
+        if mapping:
+            telefone = limpar_numero(mapping.numero_real)
+            print(f"@lid RESOLVIDO pelo mapping: {telefone}", flush=True)
         else:
-            # mensagem recebida de @lid — tenta resolver pelo pushName
-            push_name = dados.get("pushName") or ""
-            print(f"REMOTE_JID é @lid, pushName={push_name}", flush=True)
+            telefone = None
 
-            empresa_id = obter_empresa_id()
+        # 2. Busca lead pelo telefone resolvido ou pelo nome
+        lead = None
 
-            # tenta achar lead pelo nome (fallback)
-            lead = None
-            if push_name:
-                lead = Lead.query.filter(
-                    Lead.empresa_id == empresa_id,
-                    Lead.nome.ilike(f"%{push_name}%")
-                ).first()
-
-            if not lead:
-                # cria lead com o @lid como telefone temporário
-                # mas marca origem para identificar depois
-                telefone_lid = limpar_numero(remote_jid)
-                etapa = obter_entrada_whatsapp(empresa_id)
-                lead = Lead(
-                    nome=push_name or telefone_lid,
-                    telefone=telefone_lid,
-                    email=None,
-                    origem="whatsapp_lid",
-                    produto_interesse="Atendimento WhatsApp",
-                    plano=None,
-                    valor=0.0,
-                    status="aberto",
-                    pipeline_id=etapa.id,
-                    empresa_id=empresa_id,
-                    usuario_id=None,
-                    criado_em=datetime.utcnow(),
-                    etapa_atualizada_em=datetime.utcnow()
-                )
-                db.session.add(lead)
-                db.session.commit()
-                print("NOVO LEAD @lid CRIADO:", lead.id, flush=True)
-            else:
-                print("LEAD @lid ENCONTRADO POR NOME:", lead.id, flush=True)
-
-            if not texto:
-                texto = "Mensagem recebida"
-
-            mensagem = MensagemWhatsApp(
+        if telefone:
+            lead = Lead.query.filter_by(
                 empresa_id=empresa_id,
-                lead_id=lead.id,
-                usuario_id=None,
-                telefone=lead.telefone,
-                nome_contato=lead.nome,
-                direcao="recebida",
-                mensagem=texto,
-                tipo_mensagem="texto",
-                status="recebida",
-                lida=False,
-                criado_em=datetime.utcnow()
-            )
-            db.session.add(mensagem)
-            db.session.commit()
-            print("MENSAGEM @lid SALVA:", mensagem.id, flush=True)
-            return jsonify({"ok": True})
+                telefone=telefone
+            ).first()
 
-    # fluxo normal para @s.whatsapp.net
+        if not lead and push_name:
+            lead = Lead.query.filter(
+                Lead.empresa_id == empresa_id,
+                Lead.nome.ilike(f"%{push_name}%")
+            ).first()
+
+            if lead:
+                print(f"@lid RESOLVIDO por nome: {lead.telefone}", flush=True)
+                # Salva mapping para o futuro
+                novo_mapping = LidMapping(
+                    lid_jid=remote_jid,
+                    numero_real=lead.telefone,
+                    instance_name=instance_name
+                )
+                db.session.add(novo_mapping)
+                db.session.commit()
+                telefone = lead.telefone
+
+        if not lead:
+            # Cria lead novo com @lid como telefone temporário
+            telefone_lid = limpar_numero(remote_jid)
+            etapa = obter_entrada_whatsapp(empresa_id)
+            lead = Lead(
+                nome=push_name or telefone_lid,
+                telefone=telefone_lid,
+                email=None,
+                origem="whatsapp_lid",
+                produto_interesse="Atendimento WhatsApp",
+                plano=None,
+                valor=0.0,
+                status="aberto",
+                pipeline_id=etapa.id,
+                empresa_id=empresa_id,
+                usuario_id=None,
+                criado_em=datetime.utcnow(),
+                etapa_atualizada_em=datetime.utcnow()
+            )
+            db.session.add(lead)
+            db.session.commit()
+            telefone = telefone_lid
+            print("NOVO LEAD @lid CRIADO:", lead.id, flush=True)
+        else:
+            print("LEAD @lid ENCONTRADO:", lead.id, flush=True)
+
+        if not texto:
+            texto = "Mensagem recebida"
+
+        mensagem = MensagemWhatsApp(
+            empresa_id=empresa_id,
+            lead_id=lead.id,
+            usuario_id=None,
+            telefone=telefone,
+            nome_contato=lead.nome,
+            direcao="recebida",
+            mensagem=texto,
+            tipo_mensagem="texto",
+            status="recebida",
+            lida=False,
+            criado_em=datetime.utcnow()
+        )
+        db.session.add(mensagem)
+        db.session.commit()
+        print("MENSAGEM @lid SALVA:", mensagem.id, flush=True)
+        return jsonify({"ok": True})
+
+    # ✅ Fluxo normal para @s.whatsapp.net
     telefone = limpar_numero(remote_jid)
 
     print("TELEFONE:", telefone, flush=True)
@@ -212,8 +241,6 @@ def receber():
     if not telefone:
         print("WEBHOOK IGNORADO: telefone vazio", flush=True)
         return jsonify({"ok": True, "ignorado": "telefone vazio"})
-
-    empresa_id = obter_empresa_id()
 
     print("EMPRESA_ID:", empresa_id, flush=True)
 
