@@ -307,103 +307,82 @@ const chatBox = document.getElementById("chatBox");
 
 let atualizando = false;
 let mensagensPendentes = [];
+let ultimoCount = document.querySelectorAll(".msg").length;
 
 function descerChat(){
-    if(chatBox){
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+    if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 function adicionarMensagemPendente(texto){
     const id = "pendente-" + Date.now();
-
-    mensagensPendentes.push({
-        id: id,
-        texto: texto,
-        criadoEm: Date.now()
-    });
+    mensagensPendentes.push({ id, texto, criadoEm: Date.now() });
 
     const div = document.createElement("div");
-    div.className = "msg me msg-pendente";
+    div.className = "msg me";
     div.dataset.pendenteId = id;
-
     div.innerHTML = `
         <div class="msg-content">
             ${texto}
-            <div class="msg-meta">
-                <span>Agora</span>
-                <span>✓✓</span>
-            </div>
-        </div>
-    `;
-
+            <div class="msg-meta"><span>Agora</span><span>✓✓</span></div>
+        </div>`;
     chatBox.appendChild(div);
     descerChat();
 }
 
-function restaurarPendentes(){
+function limparPendentesAntigos(){
     const agora = Date.now();
+    mensagensPendentes = mensagensPendentes.filter(p => agora - p.criadoEm < 60000);
+}
 
-    mensagensPendentes = mensagensPendentes.filter(item => {
-        return agora - item.criadoEm < 60000;
-    });
-
+function restaurarPendentes(){
+    limparPendentesAntigos();
     mensagensPendentes.forEach(item => {
         if(!chatBox.querySelector(`[data-pendente-id="${item.id}"]`)){
             const div = document.createElement("div");
-            div.className = "msg me msg-pendente";
+            div.className = "msg me";
             div.dataset.pendenteId = item.id;
-
             div.innerHTML = `
                 <div class="msg-content">
                     ${item.texto}
-                    <div class="msg-meta">
-                        <span>Agora</span>
-                        <span>✓✓</span>
-                    </div>
-                </div>
-            `;
-
+                    <div class="msg-meta"><span>Agora</span><span>✓✓</span></div>
+                </div>`;
             chatBox.appendChild(div);
         }
     });
 }
 
 async function atualizarChat(){
-    if(atualizando){
-        return;
-    }
-
+    if(atualizando) return;
     atualizando = true;
 
     try{
         const response = await fetch(window.location.href, {
-            credentials:"same-origin",
-            headers:{
-                "X-Requested-With":"XMLHttpRequest"
-            }
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
         });
 
         const html = await response.text();
-
-        if(html.includes("sidebar") || html.includes("Dashboard") || html.includes("MaVa CRM")){
-            console.log("Ignorou HTML errado no chat.");
-            atualizando = false;
-            return;
-        }
-
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
         const novoChat = doc.getElementById("chatBox");
 
-        if(novoChat && chatBox){
-            chatBox.innerHTML = novoChat.innerHTML;
-            restaurarPendentes();
-            descerChat();
-        }
+        if(novoChat){
+            const novoCount = novoChat.querySelectorAll(".msg").length;
 
-    }catch(erro){
-        console.log("Erro ao atualizar chat:", erro);
+            // ✅ só atualiza se tiver mensagem nova
+            if(novoCount > ultimoCount){
+                const pertoDoFim = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < 200;
+                chatBox.innerHTML = novoChat.innerHTML;
+                ultimoCount = novoCount;
+                restaurarPendentes();
+                if(pertoDoFim) descerChat();
+            } else {
+                // mantém pendentes mesmo sem mensagem nova
+                restaurarPendentes();
+            }
+        }
+    }catch(e){
+        console.log("Erro ao atualizar chat:", e);
     }
 
     atualizando = false;
@@ -412,20 +391,13 @@ async function atualizarChat(){
 descerChat();
 
 if(formChat){
-
     formChat.addEventListener("submit", async function(e){
-
         e.preventDefault();
-
         const input = document.getElementById("mensagemInput");
         const mensagem = input.value.trim();
-
-        if(!mensagem){
-            return;
-        }
+        if(!mensagem) return;
 
         adicionarMensagemPendente(mensagem);
-
         input.value = "";
 
         const formData = new FormData();
@@ -433,32 +405,23 @@ if(formChat){
 
         try{
             const response = await fetch(formChat.action, {
-                method:"POST",
-                body:formData,
-                credentials:"same-origin",
-                headers:{
-                    "X-Requested-With":"XMLHttpRequest"
-                }
+                method: "POST",
+                body: formData,
+                credentials: "same-origin",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
             });
 
             if(response.ok){
-                setTimeout(() => {
-                    atualizarChat();
-                }, 4000);
-            }else{
+                // força atualização após envio para confirmar no banco
+                setTimeout(() => atualizarChat(), 2000);
+            } else {
                 alert("Erro ao enviar mensagem.");
             }
-
-        }catch(erro){
-            console.log(erro);
+        }catch(e){
             alert("Erro ao enviar mensagem.");
         }
-
     });
-
 }
 
-setInterval(() => {
-    atualizarChat();
-}, 7000);
+setInterval(() => atualizarChat(), 5000);
 </script>
