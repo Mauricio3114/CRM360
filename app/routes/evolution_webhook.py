@@ -103,7 +103,7 @@ def receber():
 
     print("PAYLOAD WEBHOOK:", payload, flush=True)
 
-    # ✅ FIX 1: ignora eventos que não são messages.upsert
+    # ignora eventos que não são messages.upsert
     evento = payload.get("event", "")
     if evento != "messages.upsert":
         print(f"WEBHOOK IGNORADO: evento={evento}", flush=True)
@@ -111,7 +111,7 @@ def receber():
 
     dados = payload.get("data") or payload
 
-    # ✅ FIX 2: se data vier como lista, ignora (contacts.update, sync, etc)
+    # se data vier como lista, ignora
     if isinstance(dados, list):
         print("WEBHOOK IGNORADO: data é lista", flush=True)
         return jsonify({"ok": True, "ignorado": "data lista"})
@@ -133,6 +133,78 @@ def receber():
         print("WEBHOOK IGNORADO: sem remote_jid ou grupo", flush=True)
         return jsonify({"ok": True, "ignorado": "sem remote_jid ou grupo"})
 
+    # ✅ FIX @lid: se remoteJid for @lid, usa o sender do payload como telefone
+    # sender = número da instância conectada (quem enviou/recebeu)
+    # para fromMe=True: o destinatário é o @lid → usa pushName ou ignora
+    # para fromMe=False: quem mandou é o @lid → tenta buscar pelo pushName no banco
+    if "@lid" in remote_jid:
+        if from_me:
+            # mensagem enviada por nós para um @lid — ignora, já foi salva pelo envio
+            print("WEBHOOK IGNORADO: fromMe=True com @lid", flush=True)
+            return jsonify({"ok": True, "ignorado": "fromMe lid"})
+        else:
+            # mensagem recebida de @lid — tenta resolver pelo pushName
+            push_name = dados.get("pushName") or ""
+            print(f"REMOTE_JID é @lid, pushName={push_name}", flush=True)
+
+            empresa_id = obter_empresa_id()
+
+            # tenta achar lead pelo nome (fallback)
+            lead = None
+            if push_name:
+                lead = Lead.query.filter(
+                    Lead.empresa_id == empresa_id,
+                    Lead.nome.ilike(f"%{push_name}%")
+                ).first()
+
+            if not lead:
+                # cria lead com o @lid como telefone temporário
+                # mas marca origem para identificar depois
+                telefone_lid = limpar_numero(remote_jid)
+                etapa = obter_entrada_whatsapp(empresa_id)
+                lead = Lead(
+                    nome=push_name or telefone_lid,
+                    telefone=telefone_lid,
+                    email=None,
+                    origem="whatsapp_lid",
+                    produto_interesse="Atendimento WhatsApp",
+                    plano=None,
+                    valor=0.0,
+                    status="aberto",
+                    pipeline_id=etapa.id,
+                    empresa_id=empresa_id,
+                    usuario_id=None,
+                    criado_em=datetime.utcnow(),
+                    etapa_atualizada_em=datetime.utcnow()
+                )
+                db.session.add(lead)
+                db.session.commit()
+                print("NOVO LEAD @lid CRIADO:", lead.id, flush=True)
+            else:
+                print("LEAD @lid ENCONTRADO POR NOME:", lead.id, flush=True)
+
+            if not texto:
+                texto = "Mensagem recebida"
+
+            mensagem = MensagemWhatsApp(
+                empresa_id=empresa_id,
+                lead_id=lead.id,
+                usuario_id=None,
+                telefone=lead.telefone,
+                nome_contato=lead.nome,
+                direcao="recebida",
+                mensagem=texto,
+                tipo_mensagem="texto",
+                status="recebida",
+                lida=False,
+                criado_em=datetime.utcnow()
+            )
+            db.session.add(mensagem)
+            db.session.commit()
+            print("MENSAGEM @lid SALVA:", mensagem.id, flush=True)
+            return jsonify({"ok": True})
+
+    # fluxo normal para @s.whatsapp.net
     telefone = limpar_numero(remote_jid)
 
     print("TELEFONE:", telefone, flush=True)
