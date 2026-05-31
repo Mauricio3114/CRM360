@@ -678,11 +678,26 @@ def chat_ajax(jid):
     if telefone and not telefone.startswith("55"):
         telefone = f"55{telefone}"
 
-    mensagens_banco = MensagemWhatsApp.query.filter_by(
+    # ✅ FIX: busca o lead pelo telefone real para pegar o lead_id
+    lead = Lead.query.filter_by(
+        empresa_id=current_user.empresa_id,
         telefone=telefone
-    ).order_by(
-        MensagemWhatsApp.criado_em.asc()
-    ).all()
+    ).first()
+
+    if lead:
+        # busca mensagens pelo lead_id (pega tudo, mesmo que @lid tenha criado)
+        mensagens_banco = MensagemWhatsApp.query.filter_by(
+            lead_id=lead.id
+        ).order_by(
+            MensagemWhatsApp.criado_em.asc()
+        ).all()
+    else:
+        # fallback: busca por telefone direto
+        mensagens_banco = MensagemWhatsApp.query.filter_by(
+            telefone=telefone
+        ).order_by(
+            MensagemWhatsApp.criado_em.asc()
+        ).all()
 
     mensagens = []
 
