@@ -139,52 +139,51 @@ def receber():
     # ✅ Tratamento de @lid
     if "@lid" in remote_jid:
         if from_me:
-            print("WEBHOOK IGNORADO: fromMe=True com @lid", flush=True)
-            return jsonify({"ok": True, "ignorado": "fromMe lid"})
+            # ✅ FIX: não ignora mais — salva a mensagem enviada também
+            push_name = dados.get("pushName") or ""
+            instance_name = payload.get("instance", "")
 
-        push_name = dados.get("pushName") or ""
-        instance_name = payload.get("instance", "")
+            mapping = LidMapping.query.filter_by(
+                lid_jid=remote_jid.split(":")[0] + "@lid",  # normaliza 235901229781167:80@lid
+                instance_name=instance_name
+            ).first()
 
-        print(f"REMOTE_JID é @lid, pushName={push_name}", flush=True)
+            if mapping:
+                telefone = limpar_numero(mapping.numero_real)
+            else:
+                telefone = limpar_numero(remote_jid)
 
-        # 1. Tenta resolver pelo LidMapping
-        mapping = LidMapping.query.filter_by(
-            lid_jid=remote_jid,
-            instance_name=instance_name
-        ).first()
+            empresa_id = obter_empresa_id()
 
-        if mapping:
-            telefone = limpar_numero(mapping.numero_real)
-            print(f"@lid RESOLVIDO pelo mapping: {telefone}", flush=True)
-        else:
-            telefone = None
-
-        # 2. Busca lead pelo telefone resolvido ou pelo nome
-        lead = None
-
-        if telefone:
             lead = Lead.query.filter_by(
                 empresa_id=empresa_id,
                 telefone=telefone
             ).first()
 
-        if not lead and push_name:
-            lead = Lead.query.filter(
-                Lead.empresa_id == empresa_id,
-                Lead.nome.ilike(f"%{push_name}%")
-            ).first()
+            if not lead:
+                print("WEBHOOK IGNORADO: fromMe=True com @lid sem lead", flush=True)
+                return jsonify({"ok": True, "ignorado": "fromMe lid sem lead"})
 
-            if lead:
-                print(f"@lid RESOLVIDO por nome: {lead.telefone}", flush=True)
-                # Salva mapping para o futuro
-                novo_mapping = LidMapping(
-                    lid_jid=remote_jid,
-                    numero_real=lead.telefone,
-                    instance_name=instance_name
-                )
-                db.session.add(novo_mapping)
-                db.session.commit()
-                telefone = lead.telefone
+            if not texto:
+                texto = "Mensagem enviada"
+
+            mensagem = MensagemWhatsApp(
+                empresa_id=empresa_id,
+                lead_id=lead.id,
+                usuario_id=None,
+                telefone=telefone,
+                nome_contato=lead.nome,
+                direcao="enviada",
+                mensagem=texto,
+                tipo_mensagem="texto",
+                status="enviada",
+                lida=True,
+                criado_em=datetime.utcnow()
+            )
+            db.session.add(mensagem)
+            db.session.commit()
+            print("MENSAGEM fromMe @lid SALVA:", mensagem.id, flush=True)
+            return jsonify({"ok": True})
 
         if not lead:
             # Cria lead novo com @lid como telefone temporário
